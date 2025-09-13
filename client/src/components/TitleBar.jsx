@@ -35,13 +35,13 @@ function Titlebar({ title }) {
 
           <Button
             className={`
-              px-4 py-3
+              px-4 py-3 font-semibold
               text-text-base bg-accent cursor-pointer
-              gap-3
+              gap-3 
               hover:bg-accent-interaction
             `}
           >
-            <Icon icon="upload" size={20} />
+            <Icon icon="upload" size={24} />
             <span>Export</span>
           </Button>
         </div>

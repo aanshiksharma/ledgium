@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 function HomePageController() {
@@ -7,10 +7,10 @@ function HomePageController() {
   useEffect(() => {
     const token = localStorage.getItem("token");
 
-    if (token) {
-      navigate("/dashboard");
-    } else {
+    if (!token) {
       navigate("/landing");
+    } else {
+      navigate("/dashboard");
     }
   }, []);
 

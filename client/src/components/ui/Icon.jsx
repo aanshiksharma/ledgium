@@ -3,8 +3,8 @@ import {
   Search,
   Sun,
   PlusLg,
-  Upload,
   ExclamationCircle,
+  ThreeDots,
 } from "react-bootstrap-icons";
 
 import {
@@ -41,7 +41,20 @@ function Icon({ icon, size, color }) {
       return <Sun size={size} color={color} />;
 
     case "upload":
-      return <Upload size={size} color={color} />;
+      return (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          height={`${size}px`}
+          viewBox="0 -960 960 960"
+          width={`${size}px`}
+          fill="currentColor"
+        >
+          <path d="M440-320v-326L336-542l-56-58 200-200 200 200-56 58-104-104v326h-80ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z" />
+        </svg>
+      );
+
+    case "threeDots":
+      return <ThreeDots size={size} color={color} />;
 
     default:
       return <ExclamationCircle size={size} color={color} />;

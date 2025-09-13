@@ -1,8 +1,10 @@
-import { Link, NavLink } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useRef } from "react";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 
 import Icon from "./ui/Icon";
 import Button from "./ui/Button";
+import { logOutUser } from "../state/slices/userSlice";
 
 function Sidebar() {
   const navLinks = [
@@ -12,6 +14,10 @@ function Sidebar() {
     { link: "/support", label: "Help and Support", icon: "info" },
   ];
 
+  const profilePopupRef = useRef();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
   const user = useSelector((state) => state.user);
 
   return (
@@ -20,6 +26,11 @@ function Sidebar() {
         className={`flex flex-col justify-between bg-bg-surface
         min-w-[300px] w-[20vw]
         border-r-1 border-border`}
+        onClick={() => {
+          if (!profilePopupRef.current.classList.contains("hidden")) {
+            // profilePopupRef.current.classList.add("hidden");
+          }
+        }}
       >
         <div id="top" className="py-6 px-4 flex flex-col gap-5">
           <div className="flex items-center justify-between">
@@ -63,14 +74,39 @@ function Sidebar() {
           </nav>
         </div>
 
-        <div id="bottom" className="py-6 px-4">
-          <Button
-            type="button"
-            className="hover:bg-bg-hover/50 px-4 py-3"
-            onClick={() => {}}
+        <div id="bottom" className="py-6 pt-4 px-4 relative">
+          <div
+            ref={profilePopupRef}
+            className={`
+              flex flex-col gap-2 hidden
+              p-2 rounded-lg border-1
+              border-border bg-bg-surface shadow-sm shadow-bg-hover
+              absolute bottom-full left-4 right-4`}
           >
+            <Button
+              type="button"
+              className="py-2 px-3 hover:bg-bg-hover cursor-pointer"
+            >
+              <Link to={"/user"} className="w-full text-left">
+                View Profile
+              </Link>
+            </Button>
+
+            <Button
+              type="button"
+              className="py-2 px-3 hover:bg-bg-hover cursor-pointer"
+              onClick={() => {
+                dispatch(logOutUser());
+                navigate("/");
+              }}
+            >
+              Log Out
+            </Button>
+          </div>
+
+          <div className="flex items-center justify-between w-full rounded-lg">
             <div className="flex items-center gap-4 w-full">
-              <div className="logo w-10 h-10 bg-accent rounded-full"></div>
+              <div className="w-10 h-10 bg-accent rounded-full"></div>
               <div className="flex flex-col items-start gap-1">
                 <p id="nameOfUser" className="font-bold">
                   {user.data.name}
@@ -80,7 +116,17 @@ function Sidebar() {
                 </p>
               </div>
             </div>
-          </Button>
+
+            <Button
+              type="button"
+              className="hover:text-text-base hover:bg-bg-hover/50 p-2 cursor-pointer"
+              onClick={() => {
+                profilePopupRef.current.classList.toggle("hidden");
+              }}
+            >
+              <Icon icon="threeDots" />
+            </Button>
+          </div>
         </div>
       </aside>
     </>

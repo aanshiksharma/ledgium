@@ -13,6 +13,7 @@ function Dashboard() {
   useEffect(() => {
     const apiUrl = import.meta.env.VITE_API_URL;
     const token = localStorage.getItem("token");
+    console.log("Found token: ", token);
 
     if (!token) {
       navigate("/auth/login");
@@ -34,6 +35,8 @@ function Dashboard() {
     };
 
     fetchData();
+
+    document.title = `${user.data.name.split(" ")[0]}'s Dashboard - Ledgium`;
   }, []);
 
   return (

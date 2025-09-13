@@ -14,17 +14,20 @@ import Login from "./views/auth/Login";
 import ChangePassword from "./views/auth/ChangePassword";
 import ForgotPassword from "./views/auth/ForgotPassword";
 import ResetPassword from "./views/auth/ResetPassword";
+import HomePageController from "./HomePageController";
+import Support from "./views/Support";
 
 function App() {
   return (
     <>
       <Router>
         <Routes>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/" element={<HomePageController />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/landing" element={<Landing />} />
           <Route path="/transactions" element={<Transactions />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/support" element={<Support />} />
           <Route path="/auth/login" element={<Login />} />
           <Route path="/auth/signup" element={<Signup />} />
           <Route path="/auth/change-password" element={<ChangePassword />} />

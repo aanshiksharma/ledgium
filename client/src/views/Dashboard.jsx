@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 
 import { useSelector } from "react-redux";
 
+import Sidebar from "../components/Sidebar";
+import Titlebar from "../components/Titlebar";
+
 function Dashboard() {
   const navigate = useNavigate();
   const user = useSelector((state) => state.user);
@@ -35,9 +38,13 @@ function Dashboard() {
 
   return (
     <>
-      <div className="flex flex-col gap-4 items-center justify-center h-screen bg-neutral-950 text-neutral-300">
-        <h1 className="text-3xl font-semibold">Dashboard</h1>
-        <p className="">Welcome {user.data && user.data.name}</p>
+      <div className="flex h-screen">
+        {/* 21% of 1512px ~ 320px */}
+        <Sidebar />
+        <div className="flex-1 flex flex-col">
+          <Titlebar title={`Welcome, ${user.data.name.split(" ")[0]}!`} />
+          <h1 className="text-3xl font-semibold">Dashboard</h1>
+        </div>
       </div>
     </>
   );

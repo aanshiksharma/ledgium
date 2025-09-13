@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 
 import { useSelector } from "react-redux";
 
+import Sidebar from "../components/Sidebar";
+import Titlebar from "../components/Titlebar";
+
 function Settings() {
   const navigate = useNavigate();
   const user = useSelector((state) => state.user);
@@ -35,8 +38,14 @@ function Settings() {
 
   return (
     <>
-      <div className="flex flex-col gap-4 items-center justify-center h-screen bg-neutral-950 text-neutral-300">
-        <h1 className="text-3xl font-semibold">Settings</h1>
+      <div className="flex h-screen">
+        <Sidebar />
+        <div className="flex-1 flex flex-col">
+          <Titlebar title="Settings" />
+          <p className="flex items-center justify-center h-full text-2xl">
+            This page is under development!
+          </p>
+        </div>
       </div>
     </>
   );

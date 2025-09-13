@@ -77,7 +77,10 @@ const login = async (req, res) => {
       });
     }
 
-    console.log(`Logged in as ${user.name}`);
+    const date = new Date();
+    const time = `${date.getHours()}:${date.getMinutes()}`;
+
+    console.log(`Logged in as ${user.name} at ${time}`);
 
     const tokenKey = process.env.TOKEN_KEY;
     const token = jwt.sign(

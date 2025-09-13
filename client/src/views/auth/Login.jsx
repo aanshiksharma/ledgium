@@ -45,10 +45,10 @@ function Login() {
 
   return (
     <>
-      <div className="flex items-center justify-center h-screen bg-neutral-950 text-neutral-300">
+      <div className="flex items-center justify-center h-screen">
         <div className="login-form-container">
           <div className="top flex flex-col items-center gap-6 w-full py-8">
-            <div className="logo w-15 h-15 bg-indigo-600 rounded-sm text-neutral-50 text-[40px] font-bold flex items-center justify-center">
+            <div className="logo w-15 h-15 bg-accent rounded-sm text-text-base text-[40px] font-bold flex items-center justify-center">
               L
             </div>
 
@@ -105,7 +105,10 @@ function Login() {
                       </label>
                     </div>
 
-                    <Link to="/auth/forgot-password" className="font-semibold">
+                    <Link
+                      to="/auth/forgot-password"
+                      className="font-semibold hover:text-accent"
+                    >
                       Forgot Password?
                     </Link>
                   </div>
@@ -117,7 +120,7 @@ function Login() {
 
               <button
                 type="submit"
-                className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 focus:bg-indigo-700 transition ease-out duration-200 text-neutral-100 font-bold leading-5 rounded-sm cursor-pointer"
+                className="px-4 py-2.5 bg-accent hover:bg-accent-interaction focus:bg-accent-interaction transition ease-out duration-200 text-text-base font-bold rounded-sm cursor-pointer"
               >
                 Login
               </button>
@@ -126,7 +129,7 @@ function Login() {
 
           <p className="text-xs">
             Don't have an account?{" "}
-            <Link to="/auth/signup" className="font-semibold">
+            <Link to="/auth/signup" className="font-semibold hover:text-accent">
               Signup
             </Link>
           </p>

@@ -1,7 +1,28 @@
 @import "tailwindcss";
 
+@theme {
+  --color-bg-base: var(--color-neutral-950);
+  --color-bg-surface: var(--color-neutral-900);
+  --color-bg-hover: var(--color-neutral-800);
+
+  --color-text-base: var(--color-neutral-50);
+  --color-text-muted: var(--color-neutral-400);
+
+  --color-accent: var(--color-indigo-600);
+  --color-accent-interaction: var(--color-indigo-700);
+
+  --color-border: var(--color-neutral-700);
+
+  --color-error: var(--color-red-500);
+}
+
+body {
+  @apply bg-bg-base text-text-muted;
+  line-height: calc(1em + 3px);
+}
+
 a {
-  @apply hover:text-blue-500 transition ease-out duration-200;
+  @apply transition ease-out duration-200;
 }
 
 .input-field {

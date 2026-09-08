@@ -2,7 +2,9 @@ import { expect } from "vitest";
 import type { Express } from "express";
 import request from "supertest";
 
-export const TEST_USERS = {
+export const TEST_USERS: {
+  [key: string]: { name: string; email: string; password: string };
+} = {
   aarav: {
     name: "Aarav Mehta",
     email: "aarav.test@example.com",
@@ -15,13 +17,8 @@ export const TEST_USERS = {
   },
 } as const;
 
-export async function registerUser(
-  app: Express,
-  user = TEST_USERS.aarav,
-) {
-  const response = await request(app)
-    .post("/api/v1/auth/register")
-    .send(user);
+export async function registerUser(app: Express, user = TEST_USERS.aarav) {
+  const response = await request(app).post("/api/v1/auth/register").send(user);
 
   expect(response.status).toBe(201);
   expect(response.body.success).toBe(true);

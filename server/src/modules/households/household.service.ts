@@ -24,9 +24,7 @@ export async function createHousehold(
     },
   });
 
-  if (!user) {
-    throw new ApiError(404, "User not found.");
-  }
+  if (!user) throw new ApiError(404, "User not found.");
 
   return runInTransaction(async (tx) => {
     const household = await tx.household.create({
@@ -45,7 +43,6 @@ export async function createHousehold(
           create: DEFAULT_CATEGORIES.map((category) => ({
             name: category.name,
             icon: category.icon,
-            type: "EXPENSE",
             isDefault: true,
           })),
         },
@@ -141,9 +138,7 @@ export async function getHouseholdById(userId: string, householdId: string) {
     },
   });
 
-  if (!household) {
-    throw new ApiError(404, "Household not found.");
-  }
+  if (!household) throw new ApiError(404, "Household not found.");
 
   return household;
 }

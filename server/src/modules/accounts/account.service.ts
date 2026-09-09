@@ -16,6 +16,38 @@ async function assertHouseholdMember(userId: string, householdId: string) {
   return membership;
 }
 
+async function getHouseholdCurrency(userId: string, householdId: string) {
+  const household = await prisma.household.findFirst({
+    where: {
+      id: householdId,
+      members: { some: { userId } },
+    },
+    select: { currency: true },
+  });
+
+  if (!household) {
+    throw new ApiError(404, "Household not found.");
+  }
+
+  return household.currency;
+}
+
+function assertCurrencyMatchesHousehold(
+  currency: string,
+  householdCurrency: string,
+) {
+  const normalizedCurrency = currency.trim().toUpperCase();
+
+  if (normalizedCurrency !== householdCurrency) {
+    throw new ApiError(
+      400,
+      `Account currency must match the household currency (${householdCurrency}).`,
+    );
+  }
+
+  return normalizedCurrency;
+}
+
 export async function createAccount(
   userId: string,
   householdId: string,
@@ -26,15 +58,12 @@ export async function createAccount(
     currency?: string;
   },
 ) {
-  const household = await prisma.household.findFirst({
-    where: {
-      id: householdId,
-      members: { some: { userId } },
-    },
-    select: { currency: true },
-  });
+  const householdCurrency = await getHouseholdCurrency(userId, householdId);
 
-  if (!household) throw new ApiError(404, "Household not found.");
+  const currency = assertCurrencyMatchesHousehold(
+    input.currency ?? householdCurrency,
+    householdCurrency,
+  );
 
   return prisma.account.create({
     data: {
@@ -42,7 +71,7 @@ export async function createAccount(
       name: input.name.trim(),
       type: input.type,
       openingBalance: input.openingBalance ?? 0,
-      currency: (input.currency ?? household.currency).trim().toUpperCase(),
+      currency,
     },
   });
 }
@@ -73,7 +102,10 @@ export async function getAccount(
     },
   });
 
-  if (!account) throw new ApiError(404, "Account not found.");
+  if (!account) {
+    throw new ApiError(404, "Account not found.");
+  }
+
   return account;
 }
 
@@ -98,7 +130,11 @@ export async function updateAccount(
     where: { id: accountId, householdId },
   });
 
-  if (!account) throw new ApiError(404, "Account not found.");
+  if (!account) {
+    throw new ApiError(404, "Account not found.");
+  }
+
+  const householdCurrency = await getHouseholdCurrency(userId, householdId);
 
   if (input.openingBalance !== undefined) {
     const transactionCount = await prisma.transaction.count({
@@ -115,6 +151,11 @@ export async function updateAccount(
     }
   }
 
+  const currency =
+    input.currency !== undefined
+      ? assertCurrencyMatchesHousehold(input.currency, householdCurrency)
+      : undefined;
+
   return prisma.account.update({
     where: { id: accountId },
     data: {
@@ -123,9 +164,7 @@ export async function updateAccount(
       ...(input.openingBalance !== undefined
         ? { openingBalance: input.openingBalance }
         : {}),
-      ...(input.currency !== undefined
-        ? { currency: input.currency.trim().toUpperCase() }
-        : {}),
+      ...(currency !== undefined ? { currency } : {}),
     },
   });
 }
@@ -146,7 +185,9 @@ export async function setAccountActive(
     where: { id: accountId, householdId },
   });
 
-  if (!account) throw new ApiError(404, "Account not found.");
+  if (!account) {
+    throw new ApiError(404, "Account not found.");
+  }
 
   return prisma.account.update({
     where: { id: accountId },

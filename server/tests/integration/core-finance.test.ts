@@ -143,4 +143,55 @@ describe("core finance APIs", () => {
 
     expect(response.status).toBe(404);
   });
+
+  it("rejects an account currency that differs from the household currency", async () => {
+    const response = await request(app)
+      .post(`/api/v1/households/${householdId}/accounts`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "USD Account",
+        type: "BANK",
+        openingBalance: 100,
+        currency: "USD",
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error.message).toContain(
+      "Account currency must match the household currency",
+    );
+  });
+
+  it("normalizes a matching account currency to uppercase", async () => {
+    const response = await request(app)
+      .post(`/api/v1/households/${householdId}/accounts`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "Cash",
+        type: "CASH",
+        currency: "inr",
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body.data.account.currency).toBe("INR");
+  });
+
+  it("rejects changing an account to a different currency", async () => {
+    const account = await prisma.account.create({
+      data: {
+        householdId,
+        name: "Bank",
+        type: "BANK",
+        currency: "INR",
+      },
+    });
+
+    const response = await request(app)
+      .patch(`/api/v1/households/${householdId}/accounts/${account.id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        currency: "USD",
+      });
+
+    expect(response.status).toBe(400);
+  });
 });

@@ -4,15 +4,26 @@ import { getDashboard } from "./dashboard.service.js";
 
 export async function get(req: Request, res: Response) {
   const householdId = req.params.householdId;
+
   if (typeof householdId !== "string") {
     throw new ApiError(400, "Invalid household ID.");
   }
 
-  const from = typeof req.query.from === "string" ? new Date(req.query.from) : undefined;
-  const to = typeof req.query.to === "string" ? new Date(req.query.to) : undefined;
+  const from =
+    typeof req.query.from === "string" ? new Date(req.query.from) : undefined;
 
-  if ((from && Number.isNaN(from.getTime())) || (to && Number.isNaN(to.getTime()))) {
+  const to =
+    typeof req.query.to === "string" ? new Date(req.query.to) : undefined;
+
+  if (
+    (from && Number.isNaN(from.getTime())) ||
+    (to && Number.isNaN(to.getTime()))
+  ) {
     throw new ApiError(400, "Invalid date filter.");
+  }
+
+  if (from && to && from > to) {
+    throw new ApiError(400, "The start date cannot be after the end date.");
   }
 
   const dashboard = await getDashboard(req.user!.id, householdId, from, to);

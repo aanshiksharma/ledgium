@@ -1,6 +1,16 @@
 import { Router } from "express";
+
 import { requireAuth } from "../middleware/auth.middleware.js";
-import { validateBody as validate } from "../middleware/validate.middleware.js";
+import {
+  validateBody,
+  validateParams,
+} from "../middleware/validate.middleware.js";
+
+import {
+  householdIdParamsSchema,
+  idParamsSchema,
+} from "../validation/params.validation.js";
+
 import {
   create,
   list,
@@ -18,11 +28,17 @@ const router = Router({ mergeParams: true });
 
 router.use(requireAuth);
 
-router.post("/", validate(createAccountSchema), create);
-router.get("/", list);
-router.post("/:id/archive", archive);
-router.post("/:id/restore", restore);
-router.get("/:id", getById);
-router.patch("/:id", validate(updateAccountSchema), update);
+router.post("/", validateBody(createAccountSchema), create);
+router.get("/", validateParams(householdIdParamsSchema), list);
+router.post("/:id/archive", validateParams(idParamsSchema), archive);
+router.post("/:id/restore", validateParams(idParamsSchema), restore);
+router.get("/:id", validateParams(idParamsSchema), getById);
+
+router.patch(
+  "/:id",
+  validateParams(idParamsSchema),
+  validateBody(updateAccountSchema),
+  update,
+);
 
 export default router;

@@ -29,6 +29,42 @@ async function assertParent(
   if (!parent) throw new ApiError(400, "Parent category not found.");
 }
 
+async function assertNoCategoryCycle(
+  householdId: string,
+  categoryId: string,
+  parentId: string | null | undefined,
+) {
+  if (!parentId) return;
+
+  let currentParentId: string | null = parentId;
+
+  while (currentParentId) {
+    if (currentParentId === categoryId) {
+      throw new ApiError(
+        400,
+        "A category cannot become an ancestor of itself.",
+      );
+    }
+
+    const parent: { parentId: string | null } | null =
+      await prisma.category.findFirst({
+        where: {
+          id: currentParentId,
+          householdId,
+        },
+        select: {
+          parentId: true,
+        },
+      });
+
+    if (!parent) {
+      throw new ApiError(400, "Parent category not found.");
+    }
+
+    currentParentId = parent.parentId;
+  }
+}
+
 export async function createCategory(
   userId: string,
   householdId: string,
@@ -127,6 +163,10 @@ export async function updateCategory(
   if (!category) throw new ApiError(404, "Category not found.");
 
   await assertParent(householdId, input.parentId, categoryId);
+
+  if (input.parentId !== undefined) {
+    await assertNoCategoryCycle(householdId, categoryId, input.parentId);
+  }
 
   try {
     return await prisma.category.update({

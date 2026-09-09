@@ -181,5 +181,29 @@ describe("Household API", () => {
 
       expect(response.status).toBe(401);
     });
+
+    it("rejects an invalid household UUID", async () => {
+      const { token } = await registerUser(app);
+      const response = await request(app)
+        .get("/api/v1/households/not-a-uuid")
+        .set("Authorization", `Bearer ${token}`);
+
+      expect(response.status).toBe(400);
+    });
+
+    it("returns 404 when accessing another household", async () => {
+      const { token } = await registerUser(app);
+      const other = await registerUser(app, TEST_USERS.riya);
+
+      const otherHousehold = await createHousehold(app, other.token, {
+        name: "Private Household",
+      });
+
+      const response = await request(app)
+        .get(`/api/v1/households/${otherHousehold.id}`)
+        .set("Authorization", `Bearer ${token}`);
+
+      expect(response.status).toBe(404);
+    });
   });
 });

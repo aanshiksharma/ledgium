@@ -1,6 +1,16 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth.middleware.js";
-import { validateBody as validate } from "../middleware/validate.middleware.js";
+import {
+  validateBody,
+  validateParams,
+} from "../middleware/validate.middleware.js";
+
+import {
+  householdIdParamsSchema,
+  idParamsSchema,
+  transferParamsSchema,
+} from "../validation/params.validation.js";
+
 import {
   create,
   list,
@@ -29,12 +39,37 @@ const router = Router({ mergeParams: true });
 
 router.use(requireAuth);
 
-router.post("/", validate(createTransactionSchema), create);
-router.get("/", list);
-router.get("/:id", getById);
-router.patch("/:id", validate(updateTransactionSchema), update);
-router.delete("/:id", remove);
-router.post("/transfers", validate(transferSchema), transfer);
-router.delete("/transfers/:transferId", removeTransfer);
+router.post(
+  "/",
+  validateParams(householdIdParamsSchema),
+  validateBody(createTransactionSchema),
+  create,
+);
+
+router.get("/", validateParams(householdIdParamsSchema), list);
+
+router.get("/:id", validateParams(idParamsSchema), getById);
+
+router.patch(
+  "/:id",
+  validateParams(idParamsSchema),
+  validateBody(updateTransactionSchema),
+  update,
+);
+
+router.delete("/:id", validateParams(idParamsSchema), remove);
+
+router.post(
+  "/transfers",
+  validateParams(householdIdParamsSchema),
+  validateBody(transferSchema),
+  transfer,
+);
+
+router.delete(
+  "/transfers/:transferId",
+  validateParams(transferParamsSchema),
+  removeTransfer,
+);
 
 export default router;

@@ -194,4 +194,252 @@ describe("core finance APIs", () => {
 
     expect(response.status).toBe(400);
   });
+
+  it("archives and restores an account", async () => {
+    const account = await prisma.account.create({
+      data: {
+        householdId,
+        name: "Savings",
+        type: "BANK",
+      },
+    });
+
+    const archived = await request(app)
+      .post(`/api/v1/households/${householdId}/accounts/${account.id}/archive`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(archived.status).toBe(200);
+    expect(archived.body.data.account.isActive).toBe(false);
+
+    const restored = await request(app)
+      .post(`/api/v1/households/${householdId}/accounts/${account.id}/restore`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(restored.status).toBe(200);
+    expect(restored.body.data.account.isActive).toBe(true);
+  });
+
+  it("rejects an invalid account UUID with 400", async () => {
+    const response = await request(app)
+      .get(`/api/v1/households/${householdId}/accounts/not-a-uuid`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(response.status).toBe(400);
+  });
+
+  it("cannot create a transaction on an archived account", async () => {
+    const account = await prisma.account.create({
+      data: {
+        householdId,
+        name: "Archived Cash",
+        type: "CASH",
+        isActive: false,
+      },
+    });
+
+    const response = await request(app)
+      .post(`/api/v1/households/${householdId}/transactions`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        accountId: account.id,
+        amount: -100,
+        description: "Should fail",
+        transactionDate: "2026-09-08",
+      });
+
+    expect(response.status).toBe(400);
+  });
+
+  it("rejects a zero-value transaction", async () => {
+    const account = await prisma.account.create({
+      data: {
+        householdId,
+        name: "Cash",
+        type: "CASH",
+      },
+    });
+
+    const response = await request(app)
+      .post(`/api/v1/households/${householdId}/transactions`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        accountId: account.id,
+        amount: 0,
+        description: "Zero",
+        transactionDate: "2026-09-08",
+      });
+
+    expect(response.status).toBe(400);
+  });
+
+  it("prevents a transaction from using another household's account", async () => {
+    const other = await registerUser(app, TEST_USERS.riya);
+
+    const otherHousehold = await createHousehold(app, other.token, {
+      name: "Other Household",
+    });
+
+    const otherAccount = await prisma.account.create({
+      data: {
+        householdId: otherHousehold.id,
+        name: "Private Account",
+        type: "BANK",
+      },
+    });
+
+    const response = await request(app)
+      .post(`/api/v1/households/${householdId}/transactions`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        accountId: otherAccount.id,
+        amount: -100,
+        description: "Cross household",
+        transactionDate: "2026-09-08",
+      });
+
+    expect(response.status).toBe(400);
+  });
+
+  it("prevents transfers between accounts in different households", async () => {
+    const from = await prisma.account.create({
+      data: {
+        householdId,
+        name: "My Bank",
+        type: "BANK",
+      },
+    });
+
+    const other = await registerUser(app, TEST_USERS.riya);
+
+    const otherHousehold = await createHousehold(app, other.token, {
+      name: "Other Household",
+    });
+
+    const to = await prisma.account.create({
+      data: {
+        householdId: otherHousehold.id,
+        name: "Other Cash",
+        type: "CASH",
+      },
+    });
+
+    const response = await request(app)
+      .post(`/api/v1/households/${householdId}/transactions/transfers`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        fromAccountId: from.id,
+        toAccountId: to.id,
+        amount: 500,
+        transactionDate: "2026-09-08",
+      });
+
+    expect(response.status).toBe(400);
+  });
+
+  it("rejects a zero-value transfer", async () => {
+    const from = await prisma.account.create({
+      data: {
+        householdId,
+        name: "Bank",
+        type: "BANK",
+      },
+    });
+
+    const to = await prisma.account.create({
+      data: {
+        householdId,
+        name: "Cash",
+        type: "CASH",
+      },
+    });
+
+    const response = await request(app)
+      .post(`/api/v1/households/${householdId}/transactions/transfers`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        fromAccountId: from.id,
+        toAccountId: to.id,
+        amount: 0,
+        transactionDate: "2026-09-08",
+      });
+
+    expect(response.status).toBe(400);
+  });
+
+  it("deletes both legs of a transfer together", async () => {
+    const from = await prisma.account.create({
+      data: {
+        householdId,
+        name: "Bank",
+        type: "BANK",
+      },
+    });
+
+    const to = await prisma.account.create({
+      data: {
+        householdId,
+        name: "Cash",
+        type: "CASH",
+      },
+    });
+
+    const created = await request(app)
+      .post(`/api/v1/households/${householdId}/transactions/transfers`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        fromAccountId: from.id,
+        toAccountId: to.id,
+        amount: 1000,
+        transactionDate: "2026-09-08",
+      });
+
+    expect(created.status).toBe(201);
+
+    const transferId = created.body.data.transferId;
+
+    const deleted = await request(app)
+      .delete(
+        `/api/v1/households/${householdId}/transactions/transfers/${transferId}`,
+      )
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(deleted.status).toBe(204);
+
+    const remaining = await prisma.transaction.count({
+      where: {
+        householdId,
+        transferId,
+      },
+    });
+
+    expect(remaining).toBe(0);
+  });
+
+  it("rejects an invalid transaction UUID", async () => {
+    const response = await request(app)
+      .get(`/api/v1/households/${householdId}/transactions/not-a-uuid`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(response.status).toBe(400);
+  });
+
+  it("rejects an invalid transfer UUID", async () => {
+    const response = await request(app)
+      .delete(
+        `/api/v1/households/${householdId}/transactions/transfers/not-a-uuid`,
+      )
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(response.status).toBe(400);
+  });
+
+  it("rejects an invalid transfer UUID", async () => {
+    const response = await request(app)
+      .delete(
+        `/api/v1/households/${householdId}/transactions/transfers/not-a-uuid`,
+      )
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(response.status).toBe(400);
+  });
 });

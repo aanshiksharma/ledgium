@@ -1,8 +1,9 @@
-import { Geist, Geist_Mono, Inter, Manrope } from "next/font/google"
+import { Metadata } from "next"
+import { Geist_Mono, Inter, Manrope } from "next/font/google"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
-import { AuthProvider } from "@/providers"
+import { AuthProvider, HouseholdProvider } from "@/providers"
 import { cn } from "@/lib/utils"
 
 const manropeHeading = Manrope({
@@ -16,6 +17,11 @@ const fontMono = Geist_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
 })
+
+export const metadata: Metadata = {
+  title: "Ledgium",
+  description: "Household finance management",
+}
 
 export default function RootLayout({
   children,
@@ -36,7 +42,9 @@ export default function RootLayout({
     >
       <body>
         <AuthProvider>
-          <ThemeProvider>{children}</ThemeProvider>
+          <HouseholdProvider>
+            <ThemeProvider>{children}</ThemeProvider>
+          </HouseholdProvider>
         </AuthProvider>
       </body>
     </html>

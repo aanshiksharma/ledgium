@@ -1,12 +1,17 @@
 import { Router } from "express";
+
 import {
   register,
   login,
   googleLogin,
   me,
-} from "../modules/auth/auth.controller";
-import { requireAuth } from "../middleware/auth.middleware";
-import { validateBody as validate } from "../middleware/validate.middleware";
+  refresh,
+  logout,
+} from "../modules/auth/auth.controller.js";
+
+import { requireAuth } from "../middleware/auth.middleware.js";
+import { validateBody as validate } from "../middleware/validate.middleware.js";
+
 import {
   registerSchema,
   loginSchema,
@@ -20,6 +25,10 @@ router.post("/register", validate(registerSchema), register);
 router.post("/login", validate(loginSchema), login);
 
 router.post("/google", validate(googleLoginSchema), googleLogin);
+
+router.post("/refresh", refresh);
+
+router.post("/logout", logout);
 
 router.get("/me", requireAuth, me);
 

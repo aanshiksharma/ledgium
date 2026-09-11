@@ -1,11 +1,13 @@
 import bcrypt from "bcryptjs";
+import crypto from "node:crypto";
 import { OAuth2Client } from "google-auth-library";
+import jwt from "jsonwebtoken";
+import type { StringValue } from "ms";
+
 import { prisma } from "../../db/prisma.js";
 import { ApiError } from "../../utils/apiError.js";
 import { env } from "../../config/env.js";
-import { AuthUser, AuthResponse } from "./auth.types.js";
-import jwt from "jsonwebtoken";
-import { StringValue } from "ms";
+import { AuthResponse, AuthUser } from "./auth.types.js";
 
 const googleClient = new OAuth2Client(env.GOOGLE_CLIENT_ID);
 
@@ -27,21 +29,61 @@ function sanitizeUser(user: {
   };
 }
 
-function createToken(user: AuthUser): string {
+function createAccessToken(user: AuthUser): string {
   return jwt.sign(
     {
       sub: user.id,
       email: user.email,
     },
     env.JWT_SECRET,
-    { expiresIn: env.JWT_EXPIRES_IN as StringValue },
+    {
+      expiresIn: env.JWT_EXPIRES_IN as StringValue,
+    },
   );
 }
 
-function createAuthResponse(user: AuthUser): AuthResponse {
+function generateRefreshToken(): string {
+  return crypto.randomBytes(48).toString("base64url");
+}
+
+function hashRefreshToken(token: string): string {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
+
+function getRefreshTokenExpiry(): Date {
+  const expiresAt = new Date();
+
+  expiresAt.setDate(expiresAt.getDate() + env.REFRESH_TOKEN_EXPIRES_IN_DAYS);
+
+  return expiresAt;
+}
+
+async function createRefreshToken(userId: string): Promise<string> {
+  const token = generateRefreshToken();
+
+  await prisma.refreshToken.create({
+    data: {
+      tokenHash: hashRefreshToken(token),
+      userId,
+      expiresAt: getRefreshTokenExpiry(),
+    },
+  });
+
+  return token;
+}
+
+async function createAuthSession(user: AuthUser): Promise<{
+  user: AuthUser;
+  accessToken: string;
+  refreshToken: string;
+}> {
+  const accessToken = createAccessToken(user);
+  const refreshToken = await createRefreshToken(user.id);
+
   return {
     user,
-    token: createToken(user),
+    accessToken,
+    refreshToken,
   };
 }
 
@@ -49,7 +91,12 @@ export async function registerUser(
   name: string,
   email: string,
   password: string,
-): Promise<AuthResponse> {
+): Promise<
+  AuthResponse & {
+    accessToken: string;
+    refreshToken: string;
+  }
+> {
   const normalizedEmail = email.trim().toLowerCase();
 
   const existingUser = await prisma.user.findUnique({
@@ -72,15 +119,18 @@ export async function registerUser(
     },
   });
 
-  const sanitizedUser = sanitizeUser(user);
-
-  return createAuthResponse(sanitizedUser);
+  return createAuthSession(sanitizeUser(user));
 }
 
 export async function loginUser(
   email: string,
   password: string,
-): Promise<AuthResponse> {
+): Promise<
+  AuthResponse & {
+    accessToken: string;
+    refreshToken: string;
+  }
+> {
   const normalizedEmail = email.trim().toLowerCase();
 
   const user = await prisma.user.findUnique({
@@ -99,14 +149,15 @@ export async function loginUser(
     throw new ApiError(401, "Invalid email or password.");
   }
 
-  const sanitizedUser = sanitizeUser(user);
-
-  return createAuthResponse(sanitizedUser);
+  return createAuthSession(sanitizeUser(user));
 }
 
-export async function loginWithGoogle(
-  credential: string,
-): Promise<AuthResponse> {
+export async function loginWithGoogle(credential: string): Promise<
+  AuthResponse & {
+    accessToken: string;
+    refreshToken: string;
+  }
+> {
   let payload;
 
   try {
@@ -166,9 +217,80 @@ export async function loginWithGoogle(
     });
   }
 
-  const sanitizedUser = sanitizeUser(user);
+  return createAuthSession(sanitizeUser(user));
+}
 
-  return createAuthResponse(sanitizedUser);
+export async function refreshSession(refreshToken: string): Promise<{
+  user: AuthUser;
+  accessToken: string;
+  refreshToken: string;
+}> {
+  const tokenHash = hashRefreshToken(refreshToken);
+
+  return prisma.$transaction(async (tx) => {
+    const storedToken = await tx.refreshToken.findUnique({
+      where: {
+        tokenHash,
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    if (
+      !storedToken ||
+      storedToken.revokedAt !== null ||
+      storedToken.expiresAt <= new Date()
+    ) {
+      throw new ApiError(401, "Invalid or expired refresh token.");
+    }
+
+    const revoked = await tx.refreshToken.updateMany({
+      where: {
+        id: storedToken.id,
+        revokedAt: null,
+      },
+      data: {
+        revokedAt: new Date(),
+      },
+    });
+
+    if (revoked.count !== 1) {
+      throw new ApiError(401, "Invalid or expired refresh token.");
+    }
+
+    const user = sanitizeUser(storedToken.user);
+    const accessToken = createAccessToken(user);
+    const newRefreshToken = generateRefreshToken();
+
+    await tx.refreshToken.create({
+      data: {
+        tokenHash: hashRefreshToken(newRefreshToken),
+        userId: user.id,
+        expiresAt: getRefreshTokenExpiry(),
+      },
+    });
+
+    return {
+      user,
+      accessToken,
+      refreshToken: newRefreshToken,
+    };
+  });
+}
+
+export async function revokeRefreshToken(refreshToken: string): Promise<void> {
+  const tokenHash = hashRefreshToken(refreshToken);
+
+  await prisma.refreshToken.updateMany({
+    where: {
+      tokenHash,
+      revokedAt: null,
+    },
+    data: {
+      revokedAt: new Date(),
+    },
+  });
 }
 
 export async function getUserById(userId: string): Promise<AuthUser> {

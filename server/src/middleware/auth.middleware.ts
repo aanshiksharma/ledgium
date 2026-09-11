@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
+
 import { env } from "../config/env.js";
+import { ACCESS_TOKEN_COOKIE_NAME } from "../config/constants.js";
 
 interface JwtPayload {
   sub: string;
@@ -23,9 +25,9 @@ export function requireAuth(
   res: Response,
   next: NextFunction,
 ): void {
-  const authorization = req.headers.authorization;
+  const token = req.cookies?.[ACCESS_TOKEN_COOKIE_NAME];
 
-  if (!authorization?.startsWith("Bearer ")) {
+  if (!token) {
     res.status(401).json({
       success: false,
       error: "Authentication required.",
@@ -33,8 +35,6 @@ export function requireAuth(
 
     return;
   }
-
-  const token = authorization.slice(7);
 
   try {
     const decoded = jwt.verify(token, env.JWT_SECRET) as JwtPayload;

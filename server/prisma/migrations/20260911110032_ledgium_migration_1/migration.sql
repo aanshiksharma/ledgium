@@ -4,12 +4,6 @@ CREATE TYPE "HouseholdRole" AS ENUM ('OWNER', 'ADMIN', 'MEMBER');
 -- CreateEnum
 CREATE TYPE "AccountType" AS ENUM ('BANK', 'CASH', 'CREDIT_CARD', 'INVESTMENT', 'OTHER');
 
--- CreateEnum
-CREATE TYPE "CategoryType" AS ENUM ('EXPENSE', 'INCOME');
-
--- CreateEnum
-CREATE TYPE "TransactionType" AS ENUM ('EXPENSE', 'INCOME', 'TRANSFER');
-
 -- CreateTable
 CREATE TABLE "users" (
     "id" UUID NOT NULL,
@@ -22,6 +16,18 @@ CREATE TABLE "users" (
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "refresh_tokens" (
+    "id" TEXT NOT NULL,
+    "tokenHash" TEXT NOT NULL,
+    "user_id" UUID NOT NULL,
+    "expires_at" TIMESTAMP(3) NOT NULL,
+    "revoked_at" TIMESTAMP(3),
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "refresh_tokens_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -67,7 +73,6 @@ CREATE TABLE "categories" (
     "id" UUID NOT NULL,
     "household_id" UUID NOT NULL,
     "name" VARCHAR(100) NOT NULL,
-    "type" "CategoryType" NOT NULL,
     "icon" VARCHAR(50),
     "color" VARCHAR(20),
     "parent_id" UUID,
@@ -86,7 +91,6 @@ CREATE TABLE "transactions" (
     "category_id" UUID,
     "created_by" UUID NOT NULL,
     "transfer_id" UUID,
-    "type" "TransactionType" NOT NULL,
     "amount" DECIMAL(15,2) NOT NULL,
     "description" VARCHAR(255) NOT NULL,
     "transaction_date" DATE NOT NULL,
@@ -104,6 +108,15 @@ CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 CREATE UNIQUE INDEX "users_google_id_key" ON "users"("google_id");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "refresh_tokens_tokenHash_key" ON "refresh_tokens"("tokenHash");
+
+-- CreateIndex
+CREATE INDEX "refresh_tokens_user_id_idx" ON "refresh_tokens"("user_id");
+
+-- CreateIndex
+CREATE INDEX "refresh_tokens_expires_at_idx" ON "refresh_tokens"("expires_at");
+
+-- CreateIndex
 CREATE INDEX "household_members_user_id_idx" ON "household_members"("user_id");
 
 -- CreateIndex
@@ -116,13 +129,13 @@ CREATE INDEX "accounts_household_id_idx" ON "accounts"("household_id");
 CREATE INDEX "accounts_household_id_is_active_idx" ON "accounts"("household_id", "is_active");
 
 -- CreateIndex
-CREATE INDEX "categories_household_id_type_idx" ON "categories"("household_id", "type");
+CREATE INDEX "categories_household_id_idx" ON "categories"("household_id");
 
 -- CreateIndex
 CREATE INDEX "categories_parent_id_idx" ON "categories"("parent_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "categories_household_id_name_type_key" ON "categories"("household_id", "name", "type");
+CREATE UNIQUE INDEX "categories_household_id_name_key" ON "categories"("household_id", "name");
 
 -- CreateIndex
 CREATE INDEX "transactions_household_id_transaction_date_idx" ON "transactions"("household_id", "transaction_date");
@@ -134,10 +147,10 @@ CREATE INDEX "transactions_household_id_account_id_transaction_date_idx" ON "tra
 CREATE INDEX "transactions_household_id_category_id_transaction_date_idx" ON "transactions"("household_id", "category_id", "transaction_date");
 
 -- CreateIndex
-CREATE INDEX "transactions_household_id_type_transaction_date_idx" ON "transactions"("household_id", "type", "transaction_date");
+CREATE INDEX "transactions_household_id_transfer_id_idx" ON "transactions"("household_id", "transfer_id");
 
--- CreateIndex
-CREATE INDEX "transactions_transfer_id_idx" ON "transactions"("transfer_id");
+-- AddForeignKey
+ALTER TABLE "refresh_tokens" ADD CONSTRAINT "refresh_tokens_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "household_members" ADD CONSTRAINT "household_members_household_id_fkey" FOREIGN KEY ("household_id") REFERENCES "households"("id") ON DELETE CASCADE ON UPDATE CASCADE;

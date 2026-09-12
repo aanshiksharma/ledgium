@@ -12,7 +12,7 @@ const isProduction = env.NODE_ENV === "production";
 const accessCookieOptions = {
   httpOnly: true,
   secure: isProduction,
-  sameSite: "lax" as const,
+  sameSite: isProduction ? ("none" as const) : ("lax" as const),
   path: API_PREFIX,
   maxAge: 60 * 60 * 1000,
 };
@@ -20,7 +20,7 @@ const accessCookieOptions = {
 const refreshCookieOptions = {
   httpOnly: true,
   secure: isProduction,
-  sameSite: "lax" as const,
+  sameSite: isProduction ? ("none" as const) : ("lax" as const),
   path: `${API_PREFIX}/auth`,
   maxAge: env.REFRESH_TOKEN_EXPIRES_IN_DAYS * 24 * 60 * 60 * 1000,
 };
@@ -39,14 +39,14 @@ export function clearAuthCookies(res: Response): void {
   res.clearCookie(ACCESS_TOKEN_COOKIE_NAME, {
     httpOnly: true,
     secure: isProduction,
-    sameSite: "lax",
+    sameSite: isProduction ? ("none" as const) : ("lax" as const),
     path: API_PREFIX,
   });
 
   res.clearCookie(REFRESH_TOKEN_COOKIE_NAME, {
     httpOnly: true,
     secure: isProduction,
-    sameSite: "lax",
+    sameSite: isProduction ? ("none" as const) : ("lax" as const),
     path: `${API_PREFIX}/auth`,
   });
 }

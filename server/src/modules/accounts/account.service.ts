@@ -73,6 +73,13 @@ export async function createAccount(
       openingBalance: input.openingBalance ?? 0,
       currency,
     },
+    include: {
+      _count: {
+        select: {
+          transactions: true,
+        },
+      },
+    },
   });
 }
 
@@ -81,9 +88,18 @@ export async function listAccounts(userId: string, householdId: string) {
 
   return prisma.account.findMany({
     where: { householdId },
-    orderBy: [{ isActive: "desc" }, { createdAt: "asc" }],
+    orderBy: [
+      { isActive: "desc" },
+      {
+        createdAt: "asc",
+      },
+    ],
     include: {
-      _count: { select: { transactions: true } },
+      _count: {
+        select: {
+          transactions: true,
+        },
+      },
     },
   });
 }
@@ -166,6 +182,13 @@ export async function updateAccount(
         : {}),
       ...(currency !== undefined ? { currency } : {}),
     },
+    include: {
+      _count: {
+        select: {
+          transactions: true,
+        },
+      },
+    },
   });
 }
 
@@ -192,5 +215,12 @@ export async function setAccountActive(
   return prisma.account.update({
     where: { id: accountId },
     data: { isActive },
+    include: {
+      _count: {
+        select: {
+          transactions: true,
+        },
+      },
+    },
   });
 }

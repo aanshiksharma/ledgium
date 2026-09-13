@@ -25,7 +25,7 @@ export const navigationItems: NavigationItem[] = [
     label: "Accounts",
     href: "/accounts",
     icon: CreditCard,
-    enabled: false,
+    enabled: true,
   },
   {
     label: "Transactions",

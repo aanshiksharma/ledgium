@@ -28,6 +28,10 @@ export async function apiRequest<T>(
     credentials: "include",
   })
 
+  if (response.status === 204) {
+    return undefined as T
+  }
+
   let body: ApiEnvelope<T> | null = null
 
   try {

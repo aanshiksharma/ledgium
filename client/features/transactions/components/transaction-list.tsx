@@ -7,7 +7,8 @@ type Props = {
   isLoading: boolean
   onDelete: (transactionId: string) => Promise<void>
   onDeleteTransfer: (transferId: string) => Promise<void>
-  deletingId: string | null
+  deletingTransactionId: string | null
+  deletingTransferId: string | null
 }
 
 function formatAmount(amount: string, currency: string) {
@@ -23,7 +24,8 @@ export function TransactionList({
   isLoading,
   onDelete,
   onDeleteTransfer,
-  deletingId,
+  deletingTransactionId,
+  deletingTransferId,
 }: Props) {
   if (isLoading) {
     return (
@@ -56,57 +58,63 @@ export function TransactionList({
           </tr>
         </thead>
         <tbody>
-          {transactions.map((transaction) => (
-            <tr key={transaction.id} className="border-b last:border-0">
-              <td className="px-4 py-3">
-                {new Date(transaction.transactionDate).toLocaleDateString()}
-              </td>
-              <td className="px-4 py-3">
-                <Link
-                  href={`/transactions/${transaction.id}`}
-                  className="font-medium hover:underline"
-                >
-                  {transaction.description}
-                </Link>
-                {transaction.transferId && (
-                  <div className="text-xs text-muted-foreground">Transfer</div>
-                )}
-              </td>
-              <td className="px-4 py-3">{transaction.account.name}</td>
-              <td className="px-4 py-3">{transaction.category?.name ?? "—"}</td>
-              <td className="px-4 py-3 text-right font-medium">
-                {formatAmount(transaction.amount, transaction.account.currency)}
-              </td>
-              <td className="px-4 py-3 text-right">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={
-                    deletingId === transaction.id ||
-                    deletingId === transaction.transferId
-                  }
-                  onClick={() => {
-                    if (transaction.transferId) {
-                      if (
-                        window.confirm(
-                          "Delete this transfer and both transaction sides?"
-                        )
-                      ) {
-                        void onDeleteTransfer(transaction.transferId)
+          {transactions.map((transaction) => {
+            const isDeleting = transaction.transferId
+              ? deletingTransferId === transaction.transferId
+              : deletingTransactionId === transaction.id
+            return (
+              <tr key={transaction.id} className="border-b last:border-0">
+                <td className="px-4 py-3">
+                  {new Date(transaction.transactionDate).toLocaleDateString()}
+                </td>
+                <td className="px-4 py-3">
+                  <Link
+                    href={`/transactions/${transaction.id}`}
+                    className="font-medium hover:underline"
+                  >
+                    {transaction.description}
+                  </Link>
+                  {transaction.transferId && (
+                    <div className="text-xs text-muted-foreground">
+                      Transfer
+                    </div>
+                  )}
+                </td>
+                <td className="px-4 py-3">{transaction.account.name}</td>
+                <td className="px-4 py-3">
+                  {transaction.category?.name ?? "—"}
+                </td>
+                <td className="px-4 py-3 text-right font-medium">
+                  {formatAmount(
+                    transaction.amount,
+                    transaction.account.currency
+                  )}
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={isDeleting}
+                    onClick={() => {
+                      if (transaction.transferId) {
+                        if (
+                          window.confirm(
+                            "Delete this transfer and both transaction sides?"
+                          )
+                        ) {
+                          void onDeleteTransfer(transaction.transferId)
+                        }
+                      } else if (window.confirm("Delete this transaction?")) {
+                        void onDelete(transaction.id)
                       }
-                    } else if (window.confirm("Delete this transaction?")) {
-                      void onDelete(transaction.id)
-                    }
-                  }}
-                >
-                  {deletingId === transaction.id ||
-                  deletingId === transaction.transferId
-                    ? "Deleting..."
-                    : "Delete"}
-                </Button>
-              </td>
-            </tr>
-          ))}
+                    }}
+                  >
+                    {isDeleting ? "Deleting..." : "Delete"}
+                  </Button>
+                </td>
+              </tr>
+            )
+          })}
         </tbody>
       </table>
     </div>

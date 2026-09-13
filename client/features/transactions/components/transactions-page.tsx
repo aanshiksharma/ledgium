@@ -20,7 +20,12 @@ export function TransactionsPage() {
   const [offset, setOffset] = useState(0)
   const [mode, setMode] = useState<"transaction" | "transfer" | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [deletingTransactionId, setDeletingTransactionId] = useState<
+    string | null
+  >(null)
+  const [deletingTransferId, setDeletingTransferId] = useState<string | null>(
+    null
+  )
 
   const filters = useMemo(
     () => ({
@@ -82,20 +87,22 @@ export function TransactionsPage() {
   }
 
   async function handleDelete(transactionId: string) {
-    setDeletingId(transactionId)
+    setDeletingTransactionId(transactionId)
+
     try {
       await remove(transactionId)
     } finally {
-      setDeletingId(null)
+      setDeletingTransactionId(null)
     }
   }
 
   async function handleDeleteTransfer(transferId: string) {
-    setDeletingId(transferId)
+    setDeletingTransferId(transferId)
+
     try {
       await removeTransfer(transferId)
     } finally {
-      setDeletingId(null)
+      setDeletingTransferId(null)
     }
   }
 
@@ -218,7 +225,8 @@ export function TransactionsPage() {
         isLoading={isLoading}
         onDelete={handleDelete}
         onDeleteTransfer={handleDeleteTransfer}
-        deletingId={deletingId}
+        deletingTransactionId={deletingTransactionId}
+        deletingTransferId={deletingTransferId}
       />
 
       {total > 50 && (

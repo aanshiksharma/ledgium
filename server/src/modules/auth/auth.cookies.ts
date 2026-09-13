@@ -8,19 +8,20 @@ import {
 import { env } from "../../config/env.js";
 
 const isProduction = env.NODE_ENV === "production";
+const isStaging = env.NODE_ENV === "staging";
 
 const accessCookieOptions = {
   httpOnly: true,
-  secure: isProduction,
-  sameSite: isProduction ? ("none" as const) : ("lax" as const),
+  secure: isProduction || isStaging,
+  sameSite: isProduction || isStaging ? ("none" as const) : ("lax" as const),
   path: API_PREFIX,
   maxAge: 60 * 60 * 1000,
 };
 
 const refreshCookieOptions = {
   httpOnly: true,
-  secure: isProduction,
-  sameSite: isProduction ? ("none" as const) : ("lax" as const),
+  secure: isProduction || isStaging,
+  sameSite: isProduction || isStaging ? ("none" as const) : ("lax" as const),
   path: `${API_PREFIX}/auth`,
   maxAge: env.REFRESH_TOKEN_EXPIRES_IN_DAYS * 24 * 60 * 60 * 1000,
 };
@@ -38,15 +39,15 @@ export function setAuthCookies(
 export function clearAuthCookies(res: Response): void {
   res.clearCookie(ACCESS_TOKEN_COOKIE_NAME, {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? ("none" as const) : ("lax" as const),
+    secure: isProduction || isStaging,
+    sameSite: isProduction || isStaging ? ("none" as const) : ("lax" as const),
     path: API_PREFIX,
   });
 
   res.clearCookie(REFRESH_TOKEN_COOKIE_NAME, {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? ("none" as const) : ("lax" as const),
+    secure: isProduction || isStaging,
+    sameSite: isProduction || isStaging ? ("none" as const) : ("lax" as const),
     path: `${API_PREFIX}/auth`,
   });
 }

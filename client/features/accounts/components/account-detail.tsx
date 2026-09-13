@@ -32,15 +32,21 @@ export function AccountDetail({ accountId }: AccountDetailProps) {
   }
 
   if (!currentHousehold) {
-    return <p className="text-sm text-muted-foreground">No household selected.</p>
+    return (
+      <p className="text-sm text-muted-foreground">No household selected.</p>
+    )
   }
 
   if (error || !account) {
     return (
       <div className="space-y-4">
-        <p className="text-sm text-destructive">{error ?? "Account not found."}</p>
+        <p className="text-sm text-destructive">
+          {error ?? "Account not found."}
+        </p>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => void refresh()}>Retry</Button>
+          <Button variant="outline" onClick={() => void refresh()}>
+            Retry
+          </Button>
           <Button asChild variant="ghost">
             <Link href="/accounts">Back to accounts</Link>
           </Button>
@@ -52,7 +58,13 @@ export function AccountDetail({ accountId }: AccountDetailProps) {
   async function handleUpdate(input: UpdateAccountInput) {
     setIsSubmitting(true)
     try {
-      const updated = await updateAccount(currentHousehold.id, account.id, input)
+      if (!currentHousehold || !account) return
+
+      const updated = await updateAccount(
+        currentHousehold.id,
+        account.id,
+        input
+      )
       setAccount(updated)
       setIsEditing(false)
     } finally {
@@ -63,6 +75,8 @@ export function AccountDetail({ accountId }: AccountDetailProps) {
   async function handleSetActive() {
     setIsUpdatingState(true)
     try {
+      if (!currentHousehold || !account) return
+
       const updated = account.isActive
         ? await archiveAccount(currentHousehold.id, account.id)
         : await restoreAccount(currentHousehold.id, account.id)
@@ -76,10 +90,15 @@ export function AccountDetail({ accountId }: AccountDetailProps) {
     <section className="max-w-3xl space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <Link href="/accounts" className="text-sm text-muted-foreground hover:underline">
+          <Link
+            href="/accounts"
+            className="text-sm text-muted-foreground hover:underline"
+          >
             ← Back to accounts
           </Link>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight">{account.name}</h1>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight">
+            {account.name}
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {account.type.replace("_", " ")} · {account.currency}
           </p>
@@ -111,7 +130,9 @@ export function AccountDetail({ accountId }: AccountDetailProps) {
             </div>
             <div>
               <dt className="text-xs text-muted-foreground">Transactions</dt>
-              <dd className="mt-1 font-medium">{account._count.transactions}</dd>
+              <dd className="mt-1 font-medium">
+                {account._count.transactions}
+              </dd>
             </div>
             <div>
               <dt className="text-xs text-muted-foreground">Created</dt>

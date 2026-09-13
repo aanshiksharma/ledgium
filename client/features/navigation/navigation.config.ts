@@ -31,7 +31,7 @@ export const navigationItems: NavigationItem[] = [
     label: "Transactions",
     href: "/transactions",
     icon: ListChecks,
-    enabled: false,
+    enabled: true,
   },
   {
     label: "Categories",

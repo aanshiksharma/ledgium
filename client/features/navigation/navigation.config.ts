@@ -43,7 +43,7 @@ export const navigationItems: NavigationItem[] = [
     label: "Members",
     href: "/members",
     icon: Users,
-    enabled: false,
+    enabled: true,
   },
   {
     label: "Settings",

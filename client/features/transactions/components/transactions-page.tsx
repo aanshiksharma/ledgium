@@ -8,10 +8,14 @@ import { useTransactions } from "../hooks/use-transactions"
 import { TransactionForm } from "./transaction-form"
 import { TransferForm } from "./transfer-form"
 import { TransactionList } from "./transaction-list"
+import { useCategories } from "@/features/categories"
 
 export function TransactionsPage() {
   const { currentHousehold, isLoading: isHouseholdLoading } = useHousehold()
   const { accounts } = useAccounts(currentHousehold?.id ?? null)
+  const { categories } = useCategories(
+    currentHousehold?.id ?? "currentHousehold.id"
+  )
 
   const [accountId, setAccountId] = useState("")
   const [categoryId, setCategoryId] = useState("")
@@ -141,6 +145,7 @@ export function TransactionsPage() {
           <h2 className="mb-4 text-lg font-semibold">Create transaction</h2>
           <TransactionForm
             accounts={activeAccounts}
+            categories={categories}
             isSubmitting={isSubmitting}
             onSubmit={async (input) => handleCreate(input)}
             onCancel={() => setMode(null)}

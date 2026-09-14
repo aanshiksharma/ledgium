@@ -37,7 +37,7 @@ export const navigationItems: NavigationItem[] = [
     label: "Categories",
     href: "/categories",
     icon: Tags,
-    enabled: false,
+    enabled: true,
   },
   {
     label: "Members",

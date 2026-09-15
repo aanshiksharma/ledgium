@@ -21,6 +21,18 @@ enum AccountType {
   OTHER
 }
 
+enum DebtSourceType {
+  HOUSEHOLD
+  PERSONAL
+}
+
+enum DebtStatus {
+  OPEN
+  PARTIALLY_SETTLED
+  SETTLED
+  CANCELLED
+}
+
 model User {
   id            String            @id @default(uuid()) @db.Uuid
   name          String
@@ -32,8 +44,14 @@ model User {
   createdAt     DateTime          @default(now()) @map("created_at")
   updatedAt     DateTime          @updatedAt @map("updated_at")
 
-  memberships   HouseholdMember[]
-  transactions  Transaction[]     @relation("TransactionCreator")
+  memberships              HouseholdMember[]
+  transactions             Transaction[]     @relation("TransactionCreator")
+  createdHouseholdExpenses HouseholdExpense[] @relation("HouseholdExpenseCreator")
+  expensePayers            ExpensePayer[]
+  expenseParticipants      ExpenseParticipant[]
+  debtorDebts              Debt[]             @relation("DebtDebtor")
+  creditorDebts            Debt[]             @relation("DebtCreditor")
+  createdDebtSettlements   DebtSettlement[]   @relation("DebtSettlementCreator")
 
   @@map("users")
 }
@@ -60,10 +78,11 @@ model Household {
   createdAt    DateTime          @default(now()) @map("created_at")
   updatedAt    DateTime          @updatedAt @map("updated_at")
 
-  members      HouseholdMember[]
-  accounts     Account[]
-  categories   Category[]
-  transactions Transaction[]
+  members          HouseholdMember[]
+  accounts         Account[]
+  categories       Category[]
+  transactions     Transaction[]
+  householdExpenses HouseholdExpense[]
 
   @@map("households")
 }
@@ -149,4 +168,102 @@ model Transaction {
   @@index([householdId, categoryId, transactionDate])
   @@index([householdId, transferId])
   @@map("transactions")
+}
+
+model HouseholdExpense {
+  id          String   @id @default(uuid()) @db.Uuid
+  householdId String   @map("household_id") @db.Uuid
+  description String   @db.VarChar(255)
+  totalAmount Decimal  @map("total_amount") @db.Decimal(15, 2)
+  currency    String   @db.Char(3)
+  expenseDate DateTime @map("expense_date") @db.Date
+  notes       String?  @db.Text
+  createdBy   String   @map("created_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  household    Household           @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  creator      User                @relation("HouseholdExpenseCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+  payers       ExpensePayer[]
+  participants ExpenseParticipant[]
+  debts        Debt[]
+
+  @@index([householdId, expenseDate])
+  @@index([householdId, createdAt])
+  @@index([createdBy])
+  @@map("household_expenses")
+}
+
+model ExpensePayer {
+  id         String   @id @default(uuid()) @db.Uuid
+  expenseId  String   @map("expense_id") @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  paidAmount Decimal  @map("paid_amount") @db.Decimal(15, 2)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  expense HouseholdExpense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  user    User             @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([expenseId, userId])
+  @@index([userId])
+  @@map("expense_payers")
+}
+
+model ExpenseParticipant {
+  id             String   @id @default(uuid()) @db.Uuid
+  expenseId      String   @map("expense_id") @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  shareAmount    Decimal  @map("share_amount") @db.Decimal(15, 2)
+  sharePercentage Decimal? @map("share_percentage") @db.Decimal(7, 4)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  expense HouseholdExpense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  user    User             @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([expenseId, userId])
+  @@index([userId])
+  @@map("expense_participants")
+}
+
+model Debt {
+  id                 String         @id @default(uuid()) @db.Uuid
+  debtorId           String         @map("debtor_id") @db.Uuid
+  creditorId         String         @map("creditor_id") @db.Uuid
+  amount             Decimal        @db.Decimal(15, 2)
+  currency           String         @db.Char(3)
+  sourceType         DebtSourceType @map("source_type")
+  householdExpenseId String?        @map("household_expense_id") @db.Uuid
+  description        String         @db.VarChar(255)
+  status             DebtStatus     @default(OPEN)
+  dueDate            DateTime?      @map("due_date") @db.Date
+  createdAt          DateTime       @default(now()) @map("created_at")
+  updatedAt          DateTime       @updatedAt @map("updated_at")
+
+  debtor           User             @relation("DebtDebtor", fields: [debtorId], references: [id], onDelete: Restrict)
+  creditor         User             @relation("DebtCreditor", fields: [creditorId], references: [id], onDelete: Restrict)
+  householdExpense HouseholdExpense? @relation(fields: [householdExpenseId], references: [id], onDelete: Restrict)
+  settlements      DebtSettlement[]
+
+  @@index([debtorId, status])
+  @@index([creditorId, status])
+  @@index([householdExpenseId])
+  @@index([sourceType, status])
+  @@map("debts")
+}
+
+model DebtSettlement {
+  id        String   @id @default(uuid()) @db.Uuid
+  debtId    String   @map("debt_id") @db.Uuid
+  amount    Decimal  @db.Decimal(15, 2)
+  settledAt DateTime @map("settled_at") @db.Date
+  createdBy String   @map("created_by") @db.Uuid
+  notes     String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  debt    Debt @relation(fields: [debtId], references: [id], onDelete: Cascade)
+  creator User @relation("DebtSettlementCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+
+  @@index([debtId, settledAt])
+  @@index([createdBy])
+  @@map("debt_settlements")
 }

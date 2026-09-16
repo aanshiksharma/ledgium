@@ -1,54 +1,12 @@
-import {
-  CreditCard,
-  LayoutDashboard,
-  ListChecks,
-  Settings,
-  Tags,
-  Users,
-} from "lucide-react"
-
-export type NavigationItem = {
-  label: string
-  href: string
-  icon: typeof LayoutDashboard
-  enabled: boolean
-}
-
+import { CreditCard, HandCoins, LayoutDashboard, ListChecks, ReceiptText, Settings, Tags, Users } from "lucide-react"
+export type NavigationItem = { label: string; href: string; icon: typeof LayoutDashboard; enabled: boolean }
 export const navigationItems: NavigationItem[] = [
-  {
-    label: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-    enabled: true,
-  },
-  {
-    label: "Accounts",
-    href: "/accounts",
-    icon: CreditCard,
-    enabled: true,
-  },
-  {
-    label: "Transactions",
-    href: "/transactions",
-    icon: ListChecks,
-    enabled: true,
-  },
-  {
-    label: "Categories",
-    href: "/categories",
-    icon: Tags,
-    enabled: true,
-  },
-  {
-    label: "Members",
-    href: "/members",
-    icon: Users,
-    enabled: true,
-  },
-  {
-    label: "Settings",
-    href: "/settings",
-    icon: Settings,
-    enabled: false,
-  },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, enabled: true },
+  { label: "Accounts", href: "/accounts", icon: CreditCard, enabled: true },
+  { label: "Transactions", href: "/transactions", icon: ListChecks, enabled: true },
+  { label: "Categories", href: "/categories", icon: Tags, enabled: true },
+  { label: "Shared expenses", href: "/shared-expenses", icon: ReceiptText, enabled: true },
+  { label: "Debts", href: "/debts", icon: HandCoins, enabled: true },
+  { label: "Members", href: "/members", icon: Users, enabled: true },
+  { label: "Settings", href: "/settings", icon: Settings, enabled: false },
 ]

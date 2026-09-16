@@ -178,7 +178,7 @@ async function assertEditableAfterSettlement(
   const settledDebt = await tx.debt.findFirst({
     where: {
       householdExpenseId: expenseId,
-      settlements: { some: {} },
+      settlementAllocations: { some: {} },
     },
     select: { id: true },
   });
@@ -350,7 +350,7 @@ async function createOrUpdateExpense(
           },
           debts: {
             include: {
-              settlements: true,
+              settlementAllocations: true,
               debtor: {
                 select: { id: true, name: true, email: true, imageUrl: true },
               },
@@ -428,7 +428,7 @@ async function createOrUpdateExpense(
         },
         debts: {
           include: {
-            settlements: true,
+            settlementAllocations: true,
             debtor: {
               select: { id: true, name: true, email: true, imageUrl: true },
             },
@@ -507,7 +507,7 @@ export async function listHouseholdExpenses(
             amount: true,
             currency: true,
             status: true,
-            _count: { select: { settlements: true } },
+            _count: { select: { settlementAllocations: true } },
           },
         },
       },
@@ -548,7 +548,7 @@ export async function getHouseholdExpense(
       },
       debts: {
         include: {
-          settlements: true,
+          settlementAllocations: true,
           debtor: {
             select: { id: true, name: true, email: true, imageUrl: true },
           },

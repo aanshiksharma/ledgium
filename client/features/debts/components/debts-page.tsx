@@ -1,119 +1,65 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { useAuth } from "@/features/auth/hooks/use-auth"
 import { useHousehold } from "@/features/households"
 import { useDebts } from "../hooks/use-debts"
 import { DebtSummary } from "./debt-summary"
 import { SettlementHistory } from "./settlement-history"
-
-function localDate() {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, "0")
-  const day = String(now.getDate()).padStart(2, "0")
-  return `${year}-${month}-${day}`
-}
+import { SettledDebtList } from "./settled-debt-list"
 
 export function DebtsPage() {
+  const { user } = useAuth()
   const { currentHousehold, isLoading: householdLoading } = useHousehold()
   const {
     balances,
     settlements,
     settlementTotal,
+    settledDebts,
+    showSettledDebts,
+    isLoadingSettledDebts,
     isLoadingMoreSettlements,
     isLoading,
     isSubmitting,
     error,
     refresh,
+    toggleSettledDebts,
     loadMoreSettlements,
     settle,
   } = useDebts(currentHousehold?.id ?? null)
 
-  if (householdLoading) {
-    return <p className="text-sm text-muted-foreground">Loading household...</p>
-  }
-
+  if (householdLoading) return <p className="text-sm text-muted-foreground">Loading household...</p>
   if (!currentHousehold) {
-    return (
-      <div className="rounded-2xl border p-6">
-        <h2 className="font-semibold">No household selected</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Select or create a household before managing debts and settlements.
-        </p>
-      </div>
-    )
+    return <div className="rounded-2xl border p-6"><h2 className="font-semibold">No household selected</h2><p className="mt-1 text-sm text-muted-foreground">Select or create a household before managing debts and settlements.</p></div>
   }
 
-  async function handleSettle(debtId: string, amount: number) {
-    await settle(debtId, { amount, settledAt: localDate() })
-  }
-
-  const totalOutstanding = balances.reduce(
-    (sum, balance) => sum + Number(balance.outstandingAmount),
-    0,
-  )
+  const totalOutstanding = balances.reduce((sum, balance) => sum + Number(balance.outstandingAmount), 0)
 
   return (
     <section className="space-y-8">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Debts and Settlements</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            See who owes whom and keep a permanent record of settlements.
-          </p>
-        </div>
-        <Button variant="outline" onClick={() => void refresh()} disabled={isLoading || isSubmitting}>
-          Refresh
-        </Button>
+        <div><h1 className="text-2xl font-semibold tracking-tight">Debts and Settlements</h1><p className="mt-1 text-sm text-muted-foreground">See who owes whom and keep a permanent record of settlements.</p></div>
+        <Button variant="outline" onClick={() => void refresh()} disabled={isLoading || isSubmitting}>Refresh</Button>
       </header>
 
-      {error && (
-        <p className="rounded-xl border border-destructive/30 p-4 text-sm text-destructive">
-          {error}
-        </p>
-      )}
+      {error && <p className="rounded-xl border border-destructive/30 p-4 text-sm text-destructive">{error}</p>}
 
       <section className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-2">
-          <div className="rounded-2xl border p-5">
-            <p className="text-sm text-muted-foreground">Outstanding debt</p>
-            <p className="mt-1 text-2xl font-semibold">
-              {new Intl.NumberFormat(undefined, {
-                style: "currency",
-                currency: currentHousehold.currency,
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              }).format(totalOutstanding)}
-            </p>
-          </div>
-          <div className="rounded-2xl border p-5">
-            <p className="text-sm text-muted-foreground">Debt relationships</p>
-            <p className="mt-1 text-2xl font-semibold">{balances.length}</p>
-          </div>
+          <div className="rounded-2xl border p-5"><p className="text-sm text-muted-foreground">Outstanding debt</p><p className="mt-1 text-2xl font-semibold">{new Intl.NumberFormat(undefined, { style: "currency", currency: currentHousehold.currency, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(totalOutstanding)}</p></div>
+          <div className="rounded-2xl border p-5"><p className="text-sm text-muted-foreground">Debt relationships</p><p className="mt-1 text-2xl font-semibold">{balances.length}</p></div>
         </div>
-
-        <DebtSummary
-          balances={balances}
-          isLoading={isLoading}
-          isSubmitting={isSubmitting}
-          onSettle={handleSettle}
-        />
+        <DebtSummary balances={balances} currentUserId={user?.id ?? null} isLoading={isLoading} isSubmitting={isSubmitting} onSettle={settle} />
       </section>
 
       <section className="space-y-4">
-        <div>
-          <h2 className="text-lg font-semibold">Settlement history</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Every recorded payment remains here even after its debt is fully settled.
-          </p>
-        </div>
-        <SettlementHistory
-          settlements={settlements}
-          total={settlementTotal}
-          isLoading={isLoading}
-          isLoadingMore={isLoadingMoreSettlements}
-          onLoadMore={loadMoreSettlements}
-        />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><h2 className="text-lg font-semibold">Settlement history</h2><p className="mt-1 text-sm text-muted-foreground">Every recorded payment remains here even after the related debts are fully settled.</p></div></div>
+        <SettlementHistory settlements={settlements} total={settlementTotal} isLoading={isLoading} isLoadingMore={isLoadingMoreSettlements} onLoadMore={loadMoreSettlements} />
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><h2 className="text-lg font-semibold">Settled debts</h2><p className="mt-1 text-sm text-muted-foreground">Historical debt objects are hidden by default.</p></div><Button variant="outline" onClick={() => void toggleSettledDebts()} disabled={isLoadingSettledDebts}>{showSettledDebts ? "Hide settled debts" : "Show settled debts"}</Button></div>
+        {showSettledDebts && <SettledDebtList debts={settledDebts} isLoading={isLoadingSettledDebts} />}
       </section>
     </section>
   )

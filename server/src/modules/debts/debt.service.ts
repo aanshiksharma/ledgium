@@ -13,9 +13,7 @@ async function assertMembership(userId: string, householdId: string) {
 }
 
 function normalizeDate(date: Date) {
-  return new Date(
-    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
-  );
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 }
 
 const debtInclude = {
@@ -30,14 +28,14 @@ const debtInclude = {
       currency: true,
     },
   },
-  settlements: {
-    orderBy: { settledAt: "asc" as const },
+  settlementAllocations: {
+    orderBy: { createdAt: "asc" as const },
     select: {
       id: true,
       amount: true,
-      settledAt: true,
-      createdBy: true,
-      notes: true,
+      settlement: {
+        select: { id: true, settledAt: true, createdBy: true, notes: true },
+      },
     },
   },
 };
@@ -48,6 +46,7 @@ export async function listHouseholdDebts(
   filters: {
     status?: "OPEN" | "PARTIALLY_SETTLED" | "SETTLED" | "CANCELLED";
     userId?: string;
+    activeOnly: boolean;
     limit: number;
     offset: number;
   },
@@ -57,6 +56,7 @@ export async function listHouseholdDebts(
   const where: Prisma.DebtWhereInput = {
     sourceType: "HOUSEHOLD",
     householdExpense: { householdId },
+    ...(filters.activeOnly ? { isActive: true } : {}),
     ...(filters.status ? { status: filters.status } : {}),
     ...(filters.userId
       ? { OR: [{ debtorId: filters.userId }, { creditorId: filters.userId }] }
@@ -77,10 +77,7 @@ export async function listHouseholdDebts(
   return { debts, total };
 }
 
-export async function listHouseholdDebtSummary(
-  userId: string,
-  householdId: string,
-) {
+export async function listHouseholdDebtSummary(userId: string, householdId: string) {
   await assertMembership(userId, householdId);
 
   const grouped = await prisma.debt.groupBy({
@@ -115,7 +112,7 @@ export async function listHouseholdDebtSummary(
         select: { id: true, description: true, expenseDate: true },
       },
     },
-    orderBy: { createdAt: "asc" },
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
   });
 
   const debtsByPair = new Map<string, typeof activeDebts>();
@@ -140,25 +137,20 @@ export async function listHouseholdDebtSummary(
       const debtor = usersById.get(item.debtorId);
       const creditor = usersById.get(item.creditorId);
       const outstandingAmount = item._sum.remainingAmount;
+      if (!debtor || !creditor || !outstandingAmount || outstandingAmount.isZero()) return [];
 
-      if (!debtor || !creditor || !outstandingAmount) return [];
-
-      return [
-        {
-          debtor,
-          creditor,
-          outstandingAmount,
-          currency: item.currency,
-          debts: (
-            debtsByPair.get(`${item.debtorId}:${item.creditorId}`) ?? []
-          ).map((debt) => ({
-            id: debt.id,
-            description: debt.householdExpense?.description ?? debt.description,
-            expenseDate: debt.householdExpense?.expenseDate ?? debt.createdAt,
-            remainingAmount: debt.remainingAmount,
-          })),
-        },
-      ];
+      return [{
+        debtor,
+        creditor,
+        outstandingAmount,
+        currency: item.currency,
+        debts: (debtsByPair.get(`${item.debtorId}:${item.creditorId}`) ?? []).map((debt) => ({
+          id: debt.id,
+          description: debt.householdExpense?.description ?? debt.description,
+          expenseDate: debt.householdExpense?.expenseDate ?? debt.createdAt,
+          remainingAmount: debt.remainingAmount,
+        })),
+      }];
     }),
     currency: grouped[0]?.currency ?? "INR",
   };
@@ -172,10 +164,7 @@ export async function listHouseholdSettlements(
   await assertMembership(userId, householdId);
 
   const where: Prisma.DebtSettlementWhereInput = {
-    debt: {
-      sourceType: "HOUSEHOLD",
-      householdExpense: { householdId },
-    },
+    allocations: { some: { debt: { sourceType: "HOUSEHOLD", householdExpense: { householdId } } } },
   };
 
   const [settlements, total] = await prisma.$transaction([
@@ -185,23 +174,21 @@ export async function listHouseholdSettlements(
       skip: Number(filters.offset),
       take: Number(filters.limit),
       include: {
-        creator: {
-          select: { id: true, name: true, email: true, imageUrl: true },
-        },
-        debt: {
+        creator: { select: { id: true, name: true, email: true, imageUrl: true } },
+        debtor: { select: { id: true, name: true, email: true, imageUrl: true } },
+        creditor: { select: { id: true, name: true, email: true, imageUrl: true } },
+        allocations: {
           select: {
-            id: true,
-            currency: true,
-            debtor: {
-              select: { id: true, name: true, email: true, imageUrl: true },
-            },
-            creditor: {
-              select: { id: true, name: true, email: true, imageUrl: true },
-            },
-            householdExpense: {
-              select: { id: true, description: true, expenseDate: true },
+            amount: true,
+            debt: {
+              select: {
+                id: true,
+                currency: true,
+                householdExpense: { select: { id: true, description: true, expenseDate: true } },
+              },
             },
           },
+          orderBy: { createdAt: "asc" },
         },
       },
     }),
@@ -211,30 +198,12 @@ export async function listHouseholdSettlements(
   return { settlements, total };
 }
 
-export async function getHouseholdDebt(
-  userId: string,
-  householdId: string,
-  debtId: string,
-) {
+export async function getHouseholdDebt(userId: string, householdId: string, debtId: string) {
   await assertMembership(userId, householdId);
 
   const debt = await prisma.debt.findFirst({
-    where: {
-      id: debtId,
-      sourceType: "HOUSEHOLD",
-      householdExpense: { householdId },
-    },
-    include: {
-      ...debtInclude,
-      settlements: {
-        orderBy: { settledAt: "asc" },
-        include: {
-          creator: {
-            select: { id: true, name: true, email: true, imageUrl: true },
-          },
-        },
-      },
-    },
+    where: { id: debtId, sourceType: "HOUSEHOLD", householdExpense: { householdId } },
+    include: debtInclude,
   });
 
   if (!debt) throw new ApiError(404, "Household debt not found.");
@@ -244,95 +213,125 @@ export async function getHouseholdDebt(
 export async function createDebtSettlement(
   userId: string,
   householdId: string,
-  debtId: string,
-  input: { amount: number; settledAt: Date; notes?: string | null },
+  input: { debtorId: string; creditorId: string; amount: number; settledAt: Date; notes?: string | null },
 ) {
   await assertMembership(userId, householdId);
 
+  if (input.debtorId === input.creditorId) {
+    throw new ApiError(400, "A settlement requires two different household members.");
+  }
+
   return prisma.$transaction(async (tx) => {
-    const debt = await tx.debt.findFirst({
+    const [debtorMembership, creditorMembership] = await Promise.all([
+      tx.householdMember.findUnique({ where: { householdId_userId: { householdId, userId: input.debtorId } }, select: { id: true } }),
+      tx.householdMember.findUnique({ where: { householdId_userId: { householdId, userId: input.creditorId } }, select: { id: true } }),
+    ]);
+
+    if (!debtorMembership || !creditorMembership) {
+      throw new ApiError(400, "Both settlement participants must belong to the household.");
+    }
+
+    if (userId !== input.debtorId && userId !== input.creditorId) {
+      throw new ApiError(403, "Only the debtor or creditor can record this settlement.");
+    }
+
+    const debts = await tx.debt.findMany({
       where: {
-        id: debtId,
+        debtorId: input.debtorId,
+        creditorId: input.creditorId,
         sourceType: "HOUSEHOLD",
+        isActive: true,
         householdExpense: { householdId },
       },
-      select: {
-        id: true,
-        debtorId: true,
-        creditorId: true,
-        amount: true,
-        remainingAmount: true,
-        status: true,
-        isActive: true,
-      },
+      select: { id: true, remainingAmount: true, status: true },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
     });
 
-    if (!debt) throw new ApiError(404, "Household debt not found.");
-    if (
-      !debt.isActive ||
-      debt.status === "SETTLED" ||
-      debt.status === "CANCELLED"
-    ) {
-      throw new ApiError(409, "This debt cannot accept another settlement.");
+    const requestedAmount = new Prisma.Decimal(input.amount);
+    const outstanding = debts.reduce((sum, debt) => sum.add(debt.remainingAmount), new Prisma.Decimal(0));
+    if (requestedAmount.greaterThan(outstanding)) {
+      throw new ApiError(400, "Settlement amount exceeds the outstanding debt between these members.");
     }
 
-    const amount = new Prisma.Decimal(input.amount);
-    if (amount.greaterThan(debt.remainingAmount)) {
-      throw new ApiError(400, "Settlement amount exceeds the remaining debt.");
-    }
+    let remainingToAllocate = requestedAmount;
+    const allocations: { debtId: string; amount: Prisma.Decimal }[] = [];
 
-    const remainingAmount = debt.remainingAmount.sub(amount);
-    const isFullySettled = remainingAmount.isZero();
-
-    const settlement = await tx.debtSettlement.create({
-      data: {
-        debtId,
-        amount,
-        settledAt: normalizeDate(input.settledAt),
-        createdBy: userId,
-        notes: input.notes?.trim() || null,
-      },
-    });
-
-    const updatedDebt = await tx.debt.update({
-      where: { id: debtId },
-      data: {
-        remainingAmount,
-        isActive: !isFullySettled,
-        status: isFullySettled ? "SETTLED" : "PARTIALLY_SETTLED",
-      },
-    });
-
-    if (isFullySettled) {
-      const remainingRelationship = await tx.debt.aggregate({
-        where: {
-          debtorId: debt.debtorId,
-          creditorId: debt.creditorId,
-          sourceType: "HOUSEHOLD",
-          isActive: true,
-          householdExpense: { householdId },
-        },
-        _sum: { remainingAmount: true },
-      });
-
-      if (
-        (
-          remainingRelationship._sum.remainingAmount ?? new Prisma.Decimal(0)
-        ).isZero()
-      ) {
-        await tx.debt.updateMany({
-          where: {
-            debtorId: debt.debtorId,
-            creditorId: debt.creditorId,
-            sourceType: "HOUSEHOLD",
-            householdExpense: { householdId },
-            isActive: true,
-          },
-          data: { isActive: false, status: "SETTLED", remainingAmount: 0 },
-        });
+    for (const debt of debts) {
+      if (remainingToAllocate.isZero()) break;
+      const allocationAmount = Prisma.Decimal.min(debt.remainingAmount, remainingToAllocate);
+      if (allocationAmount.greaterThan(0)) {
+        allocations.push({ debtId: debt.id, amount: allocationAmount });
+        remainingToAllocate = remainingToAllocate.sub(allocationAmount);
       }
     }
 
-    return { debt: updatedDebt, settlement };
+    if (!remainingToAllocate.isZero()) {
+      throw new ApiError(409, "Unable to allocate the settlement across active debts.");
+    }
+
+    const settlement = await tx.debtSettlement.create({
+      data: {
+        debtorId: input.debtorId,
+        creditorId: input.creditorId,
+        amount: requestedAmount,
+        settledAt: normalizeDate(input.settledAt),
+        createdBy: userId,
+        notes: input.notes?.trim() || null,
+        allocations: { create: allocations.map((allocation) => ({ debtId: allocation.debtId, amount: allocation.amount })) },
+      },
+      include: {
+        creator: { select: { id: true, name: true, email: true, imageUrl: true } },
+        debtor: { select: { id: true, name: true, email: true, imageUrl: true } },
+        creditor: { select: { id: true, name: true, email: true, imageUrl: true } },
+        allocations: { select: { id: true, debtId: true, amount: true } },
+      },
+    });
+
+    for (const allocation of allocations) {
+      const debt = debts.find((item) => item.id === allocation.debtId);
+      if (!debt) throw new ApiError(409, "Settlement allocation target disappeared during the transaction.");
+
+      const remainingAmount = debt.remainingAmount.sub(allocation.amount);
+      const fullySettled = remainingAmount.isZero();
+
+      await tx.debt.update({
+        where: { id: debt.id },
+        data: {
+          remainingAmount,
+          isActive: !fullySettled,
+          status: fullySettled ? "SETTLED" : "PARTIALLY_SETTLED",
+        },
+      });
+    }
+
+    const relationshipRemaining = await tx.debt.aggregate({
+      where: {
+        debtorId: input.debtorId,
+        creditorId: input.creditorId,
+        sourceType: "HOUSEHOLD",
+        isActive: true,
+        householdExpense: { householdId },
+      },
+      _sum: { remainingAmount: true },
+    });
+
+    if ((relationshipRemaining._sum.remainingAmount ?? new Prisma.Decimal(0)).isZero()) {
+      await tx.debt.updateMany({
+        where: {
+          debtorId: input.debtorId,
+          creditorId: input.creditorId,
+          sourceType: "HOUSEHOLD",
+          householdExpense: { householdId },
+          isActive: true,
+        },
+        data: { isActive: false, status: "SETTLED", remainingAmount: 0 },
+      });
+    }
+
+    return {
+      settlement,
+      allocations,
+      remainingRelationship: relationshipRemaining._sum.remainingAmount ?? new Prisma.Decimal(0),
+    };
   });
 }

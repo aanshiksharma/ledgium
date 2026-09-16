@@ -58,13 +58,20 @@ export async function getDashboard(userId: string, householdId: string, from?: D
   const sharedExpenseTotal = householdExpenses.reduce((sum, expense) => sum.add(expense.totalAmount), new Prisma.Decimal(0));
 
   const openHouseholdDebts = await prisma.debt.findMany({
-    where: { sourceType: "HOUSEHOLD", status: { in: ["OPEN", "PARTIALLY_SETTLED"] }, householdExpense: { householdId } },
-    select: { amount: true, settlements: { select: { amount: true } } },
+    where: {
+      sourceType: "HOUSEHOLD",
+      isActive: true,
+      householdExpense: { householdId },
+    },
+    select: {
+      remainingAmount: true,
+    },
   });
-  const outstandingDebtTotal = openHouseholdDebts.reduce((sum, debt) => {
-    const settled = debt.settlements.reduce((settledSum, settlement) => settledSum.add(settlement.amount), new Prisma.Decimal(0));
-    return sum.add(debt.amount.sub(settled));
-  }, new Prisma.Decimal(0));
+
+  const outstandingDebtTotal = openHouseholdDebts.reduce(
+    (sum, debt) => sum.add(debt.remainingAmount),
+    new Prisma.Decimal(0),
+  );
 
   return {
     household,

@@ -24,6 +24,7 @@ export async function list(req: Request, res: Response) {
   const query = req.query as unknown as {
     status?: "OPEN" | "PARTIALLY_SETTLED" | "SETTLED" | "CANCELLED";
     userId?: string;
+    activeOnly: boolean;
     limit: number;
     offset: number;
   };
@@ -52,7 +53,6 @@ export async function settle(req: Request, res: Response) {
   const result = await createDebtSettlement(
     req.user!.id,
     householdId(req),
-    debtId(req),
     req.body,
   );
   res.status(201).json({ success: true, data: result });

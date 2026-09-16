@@ -51,6 +51,8 @@ model User {
   expenseParticipants      ExpenseParticipant[]
   debtorDebts              Debt[]             @relation("DebtDebtor")
   creditorDebts            Debt[]             @relation("DebtCreditor")
+  settlementDebtsAsDebtor  DebtSettlement[]   @relation("DebtSettlementDebtor")
+  settlementDebtsAsCreditor DebtSettlement[]  @relation("DebtSettlementCreditor")
   createdDebtSettlements   DebtSettlement[]   @relation("DebtSettlementCreator")
 
   @@map("users")
@@ -248,7 +250,7 @@ model Debt {
   debtor           User             @relation("DebtDebtor", fields: [debtorId], references: [id], onDelete: Restrict)
   creditor         User             @relation("DebtCreditor", fields: [creditorId], references: [id], onDelete: Restrict)
   householdExpense HouseholdExpense? @relation(fields: [householdExpenseId], references: [id], onDelete: Restrict)
-  settlements      DebtSettlement[]
+  settlementAllocations DebtSettlementAllocation[]
 
   @@index([debtorId, status])
   @@index([creditorId, status])
@@ -261,17 +263,37 @@ model Debt {
 
 model DebtSettlement {
   id        String   @id @default(uuid()) @db.Uuid
-  debtId    String   @map("debt_id") @db.Uuid
+  debtorId  String   @map("debtor_id") @db.Uuid
+  creditorId String  @map("creditor_id") @db.Uuid
   amount    Decimal  @db.Decimal(15, 2)
   settledAt DateTime @map("settled_at") @db.Date
   createdBy String   @map("created_by") @db.Uuid
   notes     String?  @db.Text
   createdAt DateTime @default(now()) @map("created_at")
 
-  debt    Debt @relation(fields: [debtId], references: [id], onDelete: Cascade)
-  creator User @relation("DebtSettlementCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+  debtor     User @relation("DebtSettlementDebtor", fields: [debtorId], references: [id], onDelete: Restrict)
+  creditor   User @relation("DebtSettlementCreditor", fields: [creditorId], references: [id], onDelete: Restrict)
+  creator    User @relation("DebtSettlementCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+  allocations DebtSettlementAllocation[]
 
-  @@index([debtId, settledAt])
+  @@index([debtorId, settledAt])
+  @@index([creditorId, settledAt])
   @@index([createdBy])
   @@map("debt_settlements")
+}
+
+model DebtSettlementAllocation {
+  id           String @id @default(uuid()) @db.Uuid
+  settlementId String @map("settlement_id") @db.Uuid
+  debtId       String @map("debt_id") @db.Uuid
+  amount       Decimal @db.Decimal(15, 2)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  settlement DebtSettlement @relation(fields: [settlementId], references: [id], onDelete: Cascade)
+  debt       Debt @relation(fields: [debtId], references: [id], onDelete: Restrict)
+
+  @@unique([settlementId, debtId])
+  @@index([settlementId])
+  @@index([debtId])
+  @@map("debt_settlement_allocations")
 }

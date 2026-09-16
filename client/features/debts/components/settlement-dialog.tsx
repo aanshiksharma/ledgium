@@ -46,7 +46,7 @@ export function SettlementDialog({ balance, currentUserId, isSubmitting, onClose
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!canSettle || !validAmount) return
+    if (!balance || !canSettle || !validAmount) return
     await onSubmit({
       debtorId: balance.debtor.id,
       creditorId: balance.creditor.id,

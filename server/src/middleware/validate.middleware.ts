@@ -43,3 +43,26 @@ export const validateParams = (schema: ZodType): RequestHandler => {
     next();
   };
 };
+
+export const validateQuery = (schema: ZodType): RequestHandler => {
+  return (req, _res, next) => {
+    const result = schema.safeParse(req.query);
+
+    if (!result.success) {
+      next(
+        new ApiError(
+          400,
+          "Request query validation failed.",
+          "VALIDATION_ERROR",
+          result.error.flatten(),
+        ),
+      );
+      return;
+    }
+
+    // Express 5 exposes req.query through a getter. Mutating the existing
+    // query object avoids assigning to a getter-only property.
+    Object.assign(req.query, result.data);
+    next();
+  };
+};

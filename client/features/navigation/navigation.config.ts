@@ -1,16 +1,18 @@
 import {
   CreditCard,
+  HandCoins,
   LayoutDashboard,
   ListChecks,
+  ReceiptText,
   Settings,
   Tags,
-  Users,
+  Users
 } from "lucide-react"
 
 export type NavigationItem = {
-  label: string
-  href: string
-  icon: typeof LayoutDashboard
+  label: string;
+  href: string;
+  icon: typeof LayoutDashboard;
   enabled: boolean
 }
 
@@ -19,36 +21,55 @@ export const navigationItems: NavigationItem[] = [
     label: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
-    enabled: true,
+    enabled: true
   },
+
+  {
+    label: "Expenses",
+    href: "/expenses",
+    icon: ReceiptText,
+    enabled: true
+  },
+
   {
     label: "Accounts",
     href: "/accounts",
     icon: CreditCard,
-    enabled: true,
+    enabled: true
   },
+
   {
     label: "Transactions",
     href: "/transactions",
     icon: ListChecks,
-    enabled: true,
+    enabled: true
   },
+
   {
     label: "Categories",
     href: "/categories",
     icon: Tags,
-    enabled: false,
+    enabled: true
   },
+
+  {
+    label: "Debts and Settlements",
+    href: "/debts",
+    icon: HandCoins,
+    enabled: true
+  },
+
   {
     label: "Members",
     href: "/members",
     icon: Users,
-    enabled: false,
+    enabled: true
   },
+
   {
     label: "Settings",
     href: "/settings",
     icon: Settings,
-    enabled: false,
+    enabled: false
   },
 ]

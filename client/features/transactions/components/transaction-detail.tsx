@@ -78,7 +78,6 @@ export function TransactionDetail({ transactionId }: Props) {
         ) : (
           <TransactionForm
             accounts={[transaction.account]}
-            categories={transaction.category ? [transaction.category] : []}
             transaction={transaction}
             isSubmitting={isSubmitting}
             onSubmit={async (input) => handleUpdate(input)}

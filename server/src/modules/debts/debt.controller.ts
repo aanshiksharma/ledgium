@@ -3,7 +3,9 @@ import { ApiError } from "../../utils/apiError.js";
 import {
   createDebtSettlement,
   getHouseholdDebt,
+  listHouseholdDebtSummary,
   listHouseholdDebts,
+  listHouseholdSettlements,
 } from "./debt.service.js";
 
 function householdId(req: Request) {
@@ -28,6 +30,17 @@ export async function list(req: Request, res: Response) {
 
   const debts = await listHouseholdDebts(req.user!.id, householdId(req), query);
   res.status(200).json({ success: true, data: debts });
+}
+
+export async function summary(req: Request, res: Response) {
+  const data = await listHouseholdDebtSummary(req.user!.id, householdId(req));
+  res.status(200).json({ success: true, data });
+}
+
+export async function settlements(req: Request, res: Response) {
+  const query = req.query as unknown as { limit: number; offset: number };
+  const data = await listHouseholdSettlements(req.user!.id, householdId(req), query);
+  res.status(200).json({ success: true, data });
 }
 
 export async function getById(req: Request, res: Response) {

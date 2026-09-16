@@ -234,11 +234,13 @@ model Debt {
   debtorId           String         @map("debtor_id") @db.Uuid
   creditorId         String         @map("creditor_id") @db.Uuid
   amount             Decimal        @db.Decimal(15, 2)
+  remainingAmount    Decimal        @map("remaining_amount") @db.Decimal(15, 2)
   currency           String         @db.Char(3)
   sourceType         DebtSourceType @map("source_type")
   householdExpenseId String?        @map("household_expense_id") @db.Uuid
   description        String         @db.VarChar(255)
   status             DebtStatus     @default(OPEN)
+  isActive           Boolean        @default(true) @map("is_active")
   dueDate            DateTime?      @map("due_date") @db.Date
   createdAt          DateTime       @default(now()) @map("created_at")
   updatedAt          DateTime       @updatedAt @map("updated_at")
@@ -250,6 +252,8 @@ model Debt {
 
   @@index([debtorId, status])
   @@index([creditorId, status])
+  @@index([debtorId, creditorId, isActive])
+  @@index([householdExpenseId, isActive])
   @@index([householdExpenseId])
   @@index([sourceType, status])
   @@map("debts")

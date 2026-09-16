@@ -133,10 +133,11 @@ model Category {
   createdAt    DateTime      @default(now()) @map("created_at")
   updatedAt    DateTime      @updatedAt @map("updated_at")
 
-  household    Household     @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  parent       Category?     @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
-  children     Category[]    @relation("CategoryHierarchy")
-  transactions Transaction[]
+  household        Household         @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  parent           Category?         @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children         Category[]        @relation("CategoryHierarchy")
+  transactions     Transaction[]
+  householdExpenses HouseholdExpense[]
 
   @@unique([householdId, name])
   @@index([householdId])
@@ -173,6 +174,7 @@ model Transaction {
 model HouseholdExpense {
   id          String   @id @default(uuid()) @db.Uuid
   householdId String   @map("household_id") @db.Uuid
+  categoryId  String?  @map("category_id") @db.Uuid
   description String   @db.VarChar(255)
   totalAmount Decimal  @map("total_amount") @db.Decimal(15, 2)
   currency    String   @db.Char(3)
@@ -183,6 +185,7 @@ model HouseholdExpense {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   household    Household           @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  category     Category?            @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   creator      User                @relation("HouseholdExpenseCreator", fields: [createdBy], references: [id], onDelete: Restrict)
   payers       ExpensePayer[]
   participants ExpenseParticipant[]
@@ -190,6 +193,7 @@ model HouseholdExpense {
 
   @@index([householdId, expenseDate])
   @@index([householdId, createdAt])
+  @@index([householdId, categoryId])
   @@index([createdBy])
   @@map("household_expenses")
 }
@@ -210,12 +214,12 @@ model ExpensePayer {
 }
 
 model ExpenseParticipant {
-  id             String   @id @default(uuid()) @db.Uuid
-  expenseId      String   @map("expense_id") @db.Uuid
-  userId         String   @map("user_id") @db.Uuid
-  shareAmount    Decimal  @map("share_amount") @db.Decimal(15, 2)
+  id              String   @id @default(uuid()) @db.Uuid
+  expenseId       String   @map("expense_id") @db.Uuid
+  userId          String   @map("user_id") @db.Uuid
+  shareAmount     Decimal  @map("share_amount") @db.Decimal(15, 2)
   sharePercentage Decimal? @map("share_percentage") @db.Decimal(7, 4)
-  createdAt      DateTime @default(now()) @map("created_at")
+  createdAt       DateTime @default(now()) @map("created_at")
 
   expense HouseholdExpense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
   user    User             @relation(fields: [userId], references: [id], onDelete: Restrict)

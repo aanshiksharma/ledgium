@@ -5,10 +5,19 @@ import { ApiError } from "../utils/apiError.js";
 export const validateBody = (schema: ZodType): RequestHandler => {
   return (req, _res, next) => {
     const result = schema.safeParse(req.body);
+
     if (!result.success) {
-      next(new ApiError(400, "Request body validation failed.", "VALIDATION_ERROR", result.error.flatten()));
+      next(
+        new ApiError(
+          400,
+          "Request body validation failed.",
+          "VALIDATION_ERROR",
+          result.error.flatten(),
+        ),
+      );
       return;
     }
+
     req.body = result.data;
     next();
   };
@@ -17,10 +26,19 @@ export const validateBody = (schema: ZodType): RequestHandler => {
 export const validateParams = (schema: ZodType): RequestHandler => {
   return (req, _res, next) => {
     const result = schema.safeParse(req.params);
+
     if (!result.success) {
-      next(new ApiError(400, "Request parameter validation failed.", "VALIDATION_ERROR", result.error.flatten()));
+      next(
+        new ApiError(
+          400,
+          "Request parameter validation failed.",
+          "VALIDATION_ERROR",
+          result.error.flatten(),
+        ),
+      );
       return;
     }
+
     req.params = result.data as typeof req.params;
     next();
   };
@@ -29,11 +47,22 @@ export const validateParams = (schema: ZodType): RequestHandler => {
 export const validateQuery = (schema: ZodType): RequestHandler => {
   return (req, _res, next) => {
     const result = schema.safeParse(req.query);
+
     if (!result.success) {
-      next(new ApiError(400, "Request query validation failed.", "VALIDATION_ERROR", result.error.flatten()));
+      next(
+        new ApiError(
+          400,
+          "Request query validation failed.",
+          "VALIDATION_ERROR",
+          result.error.flatten(),
+        ),
+      );
       return;
     }
-    req.query = result.data as typeof req.query;
+
+    // Express 5 exposes req.query through a getter. Mutating the existing
+    // query object avoids assigning to a getter-only property.
+    Object.assign(req.query, result.data);
     next();
   };
 };

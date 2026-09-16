@@ -1,13 +1,17 @@
 import { prisma } from "../../db/prisma.js";
 import { ApiError } from "../../utils/apiError.js";
 
-async function assertMembership(userId: string, householdId: string) {
+async function getMembership(userId: string, householdId: string) {
   const membership = await prisma.householdMember.findUnique({
     where: { householdId_userId: { householdId, userId } },
   });
 
   if (!membership) throw new ApiError(404, "Household not found.");
   return membership;
+}
+
+function canManageCategories(role: "OWNER" | "ADMIN" | "MEMBER") {
+  return role === "OWNER" || role === "ADMIN";
 }
 
 async function assertParent(
@@ -52,9 +56,7 @@ async function assertNoCategoryCycle(
           id: currentParentId,
           householdId,
         },
-        select: {
-          parentId: true,
-        },
+        select: { parentId: true },
       });
 
     if (!parent) {
@@ -75,9 +77,9 @@ export async function createCategory(
     parentId?: string | null;
   },
 ) {
-  const membership = await assertMembership(userId, householdId);
+  const membership = await getMembership(userId, householdId);
 
-  if (membership.role === "MEMBER") {
+  if (!canManageCategories(membership.role)) {
     throw new ApiError(403, "You do not have permission to modify categories.");
   }
 
@@ -102,7 +104,7 @@ export async function createCategory(
 }
 
 export async function listCategories(userId: string, householdId: string) {
-  await assertMembership(userId, householdId);
+  await getMembership(userId, householdId);
 
   return prisma.category.findMany({
     where: { householdId },
@@ -128,7 +130,7 @@ export async function getCategory(
   householdId: string,
   categoryId: string,
 ) {
-  await assertMembership(userId, householdId);
+  await getMembership(userId, householdId);
 
   const category = await prisma.category.findFirst({
     where: { id: categoryId, householdId },
@@ -150,9 +152,9 @@ export async function updateCategory(
     parentId?: string | null;
   },
 ) {
-  const membership = await assertMembership(userId, householdId);
+  const membership = await getMembership(userId, householdId);
 
-  if (membership.role === "MEMBER") {
+  if (!canManageCategories(membership.role)) {
     throw new ApiError(403, "You do not have permission to modify categories.");
   }
 
@@ -174,10 +176,10 @@ export async function updateCategory(
       data: {
         ...(input.name !== undefined ? { name: input.name.trim() } : {}),
         ...(input.icon !== undefined
-          ? { icon: input.icon?.trim() || null }
+          ? { icon: input.icon.trim() || null }
           : {}),
         ...(input.color !== undefined
-          ? { color: input.color?.trim() || null }
+          ? { color: input.color.trim() || null }
           : {}),
         ...(input.parentId !== undefined ? { parentId: input.parentId } : {}),
       },
@@ -195,21 +197,36 @@ export async function deleteCategory(
   householdId: string,
   categoryId: string,
 ) {
-  const membership = await assertMembership(userId, householdId);
+  const membership = await getMembership(userId, householdId);
 
-  if (membership.role === "MEMBER") {
+  if (!canManageCategories(membership.role)) {
     throw new ApiError(403, "You do not have permission to modify categories.");
   }
 
   const category = await prisma.category.findFirst({
     where: { id: categoryId, householdId },
-    include: { _count: { select: { transactions: true, children: true } } },
+    include: {
+      _count: {
+        select: {
+          transactions: true,
+          householdExpenses: true,
+          children: true,
+        },
+      },
+    },
   });
 
   if (!category) throw new ApiError(404, "Category not found.");
 
   if (category._count.transactions > 0) {
     throw new ApiError(409, "Cannot delete a category used by transactions.");
+  }
+
+  if (category._count.householdExpenses > 0) {
+    throw new ApiError(
+      409,
+      "Cannot delete a category used by shared expenses.",
+    );
   }
 
   if (category._count.children > 0) {

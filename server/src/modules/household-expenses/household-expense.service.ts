@@ -3,6 +3,20 @@ import { prisma } from "../../db/prisma.js";
 import { runInTransaction } from "../../db/transactions.js";
 import { ApiError } from "../../utils/apiError.js";
 
+type ExpenseInput = {
+  description: string;
+  categoryId: string;
+  totalAmount: number;
+  expenseDate: Date;
+  notes?: string | null;
+  payers: Array<{ userId: string; paidAmount: number }>;
+  participants: Array<{
+    userId: string;
+    shareAmount: number;
+    sharePercentage?: number;
+  }>;
+};
+
 async function assertMembership(userId: string, householdId: string) {
   const membership = await prisma.householdMember.findUnique({
     where: { householdId_userId: { householdId, userId } },
@@ -13,20 +27,46 @@ async function assertMembership(userId: string, householdId: string) {
   return membership;
 }
 
-async function assertMembersBelongToHousehold(householdId: string, userIds: string[]) {
+async function assertMembersBelongToHousehold(
+  householdId: string,
+  userIds: string[],
+) {
   const uniqueUserIds = [...new Set(userIds)];
+
   const members = await prisma.householdMember.findMany({
-    where: { householdId, userId: { in: uniqueUserIds } },
+    where: {
+      householdId,
+      userId: { in: uniqueUserIds },
+    },
     select: { userId: true },
   });
 
   if (members.length !== uniqueUserIds.length) {
-    throw new ApiError(400, "All payers and participants must be household members.");
+    throw new ApiError(
+      400,
+      "All payers and participants must be household members.",
+    );
+  }
+}
+
+async function assertCategoryBelongsToHousehold(
+  householdId: string,
+  categoryId: string,
+) {
+  const category = await prisma.category.findFirst({
+    where: { id: categoryId, householdId },
+    select: { id: true },
+  });
+
+  if (!category) {
+    throw new ApiError(400, "Category not found in this household.");
   }
 }
 
 function normalizeDate(date: Date) {
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  return new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
+  );
 }
 
 function buildDebtPairs(
@@ -38,14 +78,18 @@ function buildDebtPairs(
   for (const payer of payers) {
     netByUser.set(
       payer.userId,
-      (netByUser.get(payer.userId) ?? new Prisma.Decimal(0)).add(payer.paidAmount),
+      (netByUser.get(payer.userId) ?? new Prisma.Decimal(0)).add(
+        payer.paidAmount,
+      ),
     );
   }
 
   for (const participant of participants) {
     netByUser.set(
       participant.userId,
-      (netByUser.get(participant.userId) ?? new Prisma.Decimal(0)).sub(participant.shareAmount),
+      (netByUser.get(participant.userId) ?? new Prisma.Decimal(0)).sub(
+        participant.shareAmount,
+      ),
     );
   }
 
@@ -57,7 +101,12 @@ function buildDebtPairs(
     .filter(([, amount]) => amount.lessThan(0))
     .map(([userId, amount]) => ({ userId, amount: amount.abs() }));
 
-  const debts: Array<{ debtorId: string; creditorId: string; amount: Prisma.Decimal }> = [];
+  const debts: Array<{
+    debtorId: string;
+    creditorId: string;
+    amount: Prisma.Decimal;
+  }> = [];
+
   let creditorIndex = 0;
   let debtorIndex = 0;
 
@@ -67,10 +116,16 @@ function buildDebtPairs(
 
     if (!creditor || !debtor) break;
 
-    const amount = creditor.amount.lessThan(debtor.amount) ? creditor.amount : debtor.amount;
+    const amount = creditor.amount.lessThan(debtor.amount)
+      ? creditor.amount
+      : debtor.amount;
 
     if (amount.greaterThan(0)) {
-      debts.push({ debtorId: debtor.userId, creditorId: creditor.userId, amount });
+      debts.push({
+        debtorId: debtor.userId,
+        creditorId: creditor.userId,
+        amount,
+      });
     }
 
     creditor.amount = creditor.amount.sub(amount);
@@ -83,26 +138,105 @@ function buildDebtPairs(
   return debts;
 }
 
-export async function createHouseholdExpense(
-  userId: string,
-  householdId: string,
-  input: {
-    description: string;
-    totalAmount: number;
+function toDecimalPayers(
+  payers: ExpenseInput["payers"],
+): Array<{ userId: string; paidAmount: Prisma.Decimal }> {
+  return payers.map((payer) => ({
+    userId: payer.userId,
+    paidAmount: new Prisma.Decimal(payer.paidAmount),
+  }));
+}
+
+function toDecimalParticipants(
+  participants: ExpenseInput["participants"],
+): Array<{
+  userId: string;
+  shareAmount: Prisma.Decimal;
+  sharePercentage?: Prisma.Decimal;
+}> {
+  return participants.map((participant) => ({
+    userId: participant.userId,
+    shareAmount: new Prisma.Decimal(participant.shareAmount),
+    ...(participant.sharePercentage !== undefined
+      ? { sharePercentage: new Prisma.Decimal(participant.sharePercentage) }
+      : {}),
+  }));
+}
+
+async function assertEditableAfterSettlement(
+  tx: Prisma.TransactionClient,
+  expenseId: string,
+  input: ExpenseInput,
+  existing: {
+    totalAmount: Prisma.Decimal;
+    categoryId: string | null;
     expenseDate: Date;
-    notes?: string | null;
-    payers: Array<{ userId: string; paidAmount: number }>;
-    participants: Array<{
-      userId: string;
-      shareAmount: number;
-      sharePercentage?: number;
-    }>;
+    payers: Array<{ userId: string; paidAmount: Prisma.Decimal }>;
+    participants: Array<{ userId: string; shareAmount: Prisma.Decimal }>;
   },
 ) {
+  const settledDebt = await tx.debt.findFirst({
+    where: {
+      householdExpenseId: expenseId,
+      settlements: { some: {} },
+    },
+    select: { id: true },
+  });
+
+  if (!settledDebt) return;
+
+  const nextPayers = toDecimalPayers(input.payers);
+  const nextParticipants = toDecimalParticipants(input.participants);
+
+  const samePayer =
+    existing.payers.length === nextPayers.length &&
+    existing.payers.every((payer, index) => {
+      const next = nextPayers[index];
+      return (
+        next !== undefined &&
+        payer.userId === next.userId &&
+        payer.paidAmount.equals(next.paidAmount)
+      );
+    });
+
+  const sameParticipants =
+    existing.participants.length === nextParticipants.length &&
+    existing.participants.every((participant, index) => {
+      const next = nextParticipants[index];
+      return (
+        next !== undefined &&
+        participant.userId === next.userId &&
+        participant.shareAmount.equals(next.shareAmount)
+      );
+    });
+
+  const sameFinancialBasis =
+    existing.totalAmount.equals(new Prisma.Decimal(input.totalAmount)) &&
+    samePayer &&
+    sameParticipants;
+
+  if (!sameFinancialBasis) {
+    throw new ApiError(
+      409,
+      "This expense has recorded settlements and its financial distribution can no longer be changed.",
+    );
+  }
+}
+
+async function createOrUpdateExpense(
+  userId: string,
+  householdId: string,
+  input: ExpenseInput,
+  expenseId?: string,
+) {
   await assertMembership(userId, householdId);
+  await assertCategoryBelongsToHousehold(householdId, input.categoryId);
   await assertMembersBelongToHousehold(
     householdId,
-    [...input.payers.map((payer) => payer.userId), ...input.participants.map((participant) => participant.userId)],
+    [
+      ...input.payers.map((payer) => payer.userId),
+      ...input.participants.map((participant) => participant.userId),
+    ],
   );
 
   const household = await prisma.household.findUnique({
@@ -112,26 +246,126 @@ export async function createHouseholdExpense(
 
   if (!household) throw new ApiError(404, "Household not found.");
 
-  const payers = input.payers.map((payer) => ({
-    userId: payer.userId,
-    paidAmount: new Prisma.Decimal(payer.paidAmount),
-  }));
-  const participants = input.participants.map((participant) => ({
-    userId: participant.userId,
-    shareAmount: new Prisma.Decimal(participant.shareAmount),
-    sharePercentage:
-      participant.sharePercentage === undefined
-        ? undefined
-        : new Prisma.Decimal(participant.sharePercentage),
-  }));
-
+  const payers = toDecimalPayers(input.payers);
+  const participants = toDecimalParticipants(input.participants);
   const debtPairs = buildDebtPairs(payers, participants);
   const expenseDate = normalizeDate(input.expenseDate);
 
   return runInTransaction(async (tx) => {
+    const existing = expenseId
+      ? await tx.householdExpense.findFirst({
+          where: { id: expenseId, householdId },
+          include: {
+            payers: { select: { userId: true, paidAmount: true } },
+            participants: { select: { userId: true, shareAmount: true } },
+          },
+        })
+      : null;
+
+    if (expenseId && !existing) {
+      throw new ApiError(404, "Household expense not found.");
+    }
+
+    if (existing) {
+      await assertEditableAfterSettlement(tx, expenseId!, input, {
+        totalAmount: existing.totalAmount,
+        categoryId: existing.categoryId,
+        expenseDate: existing.expenseDate,
+        payers: existing.payers,
+        participants: existing.participants,
+      });
+
+      await tx.householdExpense.update({
+        where: { id: existing.id },
+        data: {
+          description: input.description.trim(),
+          categoryId: input.categoryId,
+          totalAmount: new Prisma.Decimal(input.totalAmount),
+          expenseDate,
+          ...(input.notes !== undefined
+            ? { notes: input.notes?.trim() || null }
+            : {}),
+        },
+      });
+
+      await tx.expensePayer.deleteMany({ where: { expenseId: existing.id } });
+      await tx.expenseParticipant.deleteMany({
+        where: { expenseId: existing.id },
+      });
+      await tx.debt.deleteMany({ where: { householdExpenseId: existing.id } });
+
+      await tx.expensePayer.createMany({
+        data: payers.map((payer) => ({
+          expenseId: existing.id,
+          userId: payer.userId,
+          paidAmount: payer.paidAmount,
+        })),
+      });
+
+      await tx.expenseParticipant.createMany({
+        data: participants.map((participant) => ({
+          expenseId: existing.id,
+          userId: participant.userId,
+          shareAmount: participant.shareAmount,
+          sharePercentage: participant.sharePercentage ?? null,
+        })),
+      });
+
+      if (debtPairs.length > 0) {
+        await tx.debt.createMany({
+          data: debtPairs.map((debt) => ({
+            debtorId: debt.debtorId,
+            creditorId: debt.creditorId,
+            amount: debt.amount,
+            currency: household.currency,
+            sourceType: "HOUSEHOLD",
+            householdExpenseId: existing.id,
+            description: input.description.trim(),
+            status: "OPEN",
+          })),
+        });
+      }
+
+      return tx.householdExpense.findUniqueOrThrow({
+        where: { id: existing.id },
+        include: {
+          category: true,
+          creator: {
+            select: { id: true, name: true, email: true, imageUrl: true },
+          },
+          payers: {
+            include: {
+              user: {
+                select: { id: true, name: true, email: true, imageUrl: true },
+              },
+            },
+          },
+          participants: {
+            include: {
+              user: {
+                select: { id: true, name: true, email: true, imageUrl: true },
+              },
+            },
+          },
+          debts: {
+            include: {
+              settlements: true,
+              debtor: {
+                select: { id: true, name: true, email: true, imageUrl: true },
+              },
+              creditor: {
+                select: { id: true, name: true, email: true, imageUrl: true },
+              },
+            },
+          },
+        },
+      });
+    }
+
     const expense = await tx.householdExpense.create({
       data: {
         householdId,
+        categoryId: input.categoryId,
         description: input.description.trim(),
         totalAmount: new Prisma.Decimal(input.totalAmount),
         currency: household.currency,
@@ -139,15 +373,16 @@ export async function createHouseholdExpense(
         notes: input.notes?.trim() || null,
         createdBy: userId,
         payers: {
-          create: payers,
+          create: payers.map((payer) => ({
+            userId: payer.userId,
+            paidAmount: payer.paidAmount,
+          })),
         },
         participants: {
           create: participants.map((participant) => ({
-            user: { connect: { id: participant.userId } },
+            userId: participant.userId,
             shareAmount: participant.shareAmount,
-            ...(participant.sharePercentage !== undefined
-              ? { sharePercentage: participant.sharePercentage }
-              : {}),
+            sharePercentage: participant.sharePercentage ?? null,
           })),
         },
       },
@@ -171,13 +406,55 @@ export async function createHouseholdExpense(
     return tx.householdExpense.findUniqueOrThrow({
       where: { id: expense.id },
       include: {
-        creator: { select: { id: true, name: true, email: true, imageUrl: true } },
-        payers: { include: { user: { select: { id: true, name: true, email: true, imageUrl: true } } } },
-        participants: { include: { user: { select: { id: true, name: true, email: true, imageUrl: true } } } },
-        debts: true,
+        category: true,
+        creator: {
+          select: { id: true, name: true, email: true, imageUrl: true },
+        },
+        payers: {
+          include: {
+            user: {
+              select: { id: true, name: true, email: true, imageUrl: true },
+            },
+          },
+        },
+        participants: {
+          include: {
+            user: {
+              select: { id: true, name: true, email: true, imageUrl: true },
+            },
+          },
+        },
+        debts: {
+          include: {
+            settlements: true,
+            debtor: {
+              select: { id: true, name: true, email: true, imageUrl: true },
+            },
+            creditor: {
+              select: { id: true, name: true, email: true, imageUrl: true },
+            },
+          },
+        },
       },
     });
   });
+}
+
+export async function createHouseholdExpense(
+  userId: string,
+  householdId: string,
+  input: ExpenseInput,
+) {
+  return createOrUpdateExpense(userId, householdId, input);
+}
+
+export async function updateHouseholdExpense(
+  userId: string,
+  householdId: string,
+  expenseId: string,
+  input: ExpenseInput,
+) {
+  return createOrUpdateExpense(userId, householdId, input, expenseId);
 }
 
 export async function listHouseholdExpenses(
@@ -206,10 +483,31 @@ export async function listHouseholdExpenses(
       skip: filters.offset,
       take: filters.limit,
       include: {
-        creator: { select: { id: true, name: true, email: true, imageUrl: true } },
-        payers: { include: { user: { select: { id: true, name: true, email: true } } } },
-        participants: { include: { user: { select: { id: true, name: true, email: true } } } },
-        debts: { select: { id: true, debtorId: true, creditorId: true, amount: true, currency: true, status: true } },
+        category: true,
+        creator: {
+          select: { id: true, name: true, email: true, imageUrl: true },
+        },
+        payers: {
+          include: {
+            user: { select: { id: true, name: true, email: true } },
+          },
+        },
+        participants: {
+          include: {
+            user: { select: { id: true, name: true, email: true } },
+          },
+        },
+        debts: {
+          select: {
+            id: true,
+            debtorId: true,
+            creditorId: true,
+            amount: true,
+            currency: true,
+            status: true,
+            _count: { select: { settlements: true } },
+          },
+        },
       },
     }),
     prisma.householdExpense.count({ where }),
@@ -218,20 +516,43 @@ export async function listHouseholdExpenses(
   return { expenses, total };
 }
 
-export async function getHouseholdExpense(userId: string, householdId: string, expenseId: string) {
+export async function getHouseholdExpense(
+  userId: string,
+  householdId: string,
+  expenseId: string,
+) {
   await assertMembership(userId, householdId);
 
   const expense = await prisma.householdExpense.findFirst({
     where: { id: expenseId, householdId },
     include: {
-      creator: { select: { id: true, name: true, email: true, imageUrl: true } },
-      payers: { include: { user: { select: { id: true, name: true, email: true, imageUrl: true } } } },
-      participants: { include: { user: { select: { id: true, name: true, email: true, imageUrl: true } } } },
+      category: true,
+      creator: {
+        select: { id: true, name: true, email: true, imageUrl: true },
+      },
+      payers: {
+        include: {
+          user: {
+            select: { id: true, name: true, email: true, imageUrl: true },
+          },
+        },
+      },
+      participants: {
+        include: {
+          user: {
+            select: { id: true, name: true, email: true, imageUrl: true },
+          },
+        },
+      },
       debts: {
         include: {
           settlements: true,
-          debtor: { select: { id: true, name: true, email: true, imageUrl: true } },
-          creditor: { select: { id: true, name: true, email: true, imageUrl: true } },
+          debtor: {
+            select: { id: true, name: true, email: true, imageUrl: true },
+          },
+          creditor: {
+            select: { id: true, name: true, email: true, imageUrl: true },
+          },
         },
       },
     },

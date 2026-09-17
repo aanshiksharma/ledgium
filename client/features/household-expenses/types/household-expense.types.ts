@@ -37,7 +37,7 @@ export type ExpenseDebt = {
   currency: string
   status: "OPEN" | "PARTIALLY_SETTLED" | "SETTLED" | "CANCELLED"
   _count?: {
-    settlements: number
+    settlementAllocations: number
   }
 }
 

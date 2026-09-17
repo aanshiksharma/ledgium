@@ -56,11 +56,9 @@ export async function listHouseholdDebts(
   const where: Prisma.DebtWhereInput = {
     sourceType: "HOUSEHOLD",
     householdExpense: { householdId },
+    OR: [{ debtorId: userId }, { creditorId: userId }],
     ...(filters.activeOnly ? { isActive: true } : {}),
     ...(filters.status ? { status: filters.status } : {}),
-    ...(filters.userId
-      ? { OR: [{ debtorId: filters.userId }, { creditorId: filters.userId }] }
-      : {}),
   };
 
   const [debts, total] = await prisma.$transaction([
@@ -86,6 +84,7 @@ export async function listHouseholdDebtSummary(userId: string, householdId: stri
       sourceType: "HOUSEHOLD",
       isActive: true,
       householdExpense: { householdId },
+      OR: [{ debtorId: userId }, { creditorId: userId }],
     },
     _sum: { remainingAmount: true },
     orderBy: { _sum: { remainingAmount: "desc" } },
@@ -98,6 +97,7 @@ export async function listHouseholdDebtSummary(userId: string, householdId: stri
       sourceType: "HOUSEHOLD",
       isActive: true,
       householdExpense: { householdId },
+      OR: [{ debtorId: userId }, { creditorId: userId }],
       debtorId: { in: [...new Set(grouped.map((item) => item.debtorId))] },
       creditorId: { in: [...new Set(grouped.map((item) => item.creditorId))] },
     },
@@ -164,7 +164,15 @@ export async function listHouseholdSettlements(
   await assertMembership(userId, householdId);
 
   const where: Prisma.DebtSettlementWhereInput = {
-    allocations: { some: { debt: { sourceType: "HOUSEHOLD", householdExpense: { householdId } } } },
+    allocations: {
+      some: {
+        debt: {
+          sourceType: "HOUSEHOLD",
+          householdExpense: { householdId },
+          OR: [{ debtorId: userId }, { creditorId: userId }],
+        },
+      },
+    },
   };
 
   const [settlements, total] = await prisma.$transaction([
@@ -202,7 +210,12 @@ export async function getHouseholdDebt(userId: string, householdId: string, debt
   await assertMembership(userId, householdId);
 
   const debt = await prisma.debt.findFirst({
-    where: { id: debtId, sourceType: "HOUSEHOLD", householdExpense: { householdId } },
+    where: {
+      id: debtId,
+      sourceType: "HOUSEHOLD",
+      householdExpense: { householdId },
+      OR: [{ debtorId: userId }, { creditorId: userId }],
+    },
     include: debtInclude,
   });
 
@@ -221,6 +234,10 @@ export async function createDebtSettlement(
     throw new ApiError(400, "A settlement requires two different household members.");
   }
 
+  if (userId !== input.creditorId) {
+    throw new ApiError(403, "Only the creditor can record this settlement.");
+  }
+
   return prisma.$transaction(async (tx) => {
     const [debtorMembership, creditorMembership] = await Promise.all([
       tx.householdMember.findUnique({ where: { householdId_userId: { householdId, userId: input.debtorId } }, select: { id: true } }),
@@ -229,10 +246,6 @@ export async function createDebtSettlement(
 
     if (!debtorMembership || !creditorMembership) {
       throw new ApiError(400, "Both settlement participants must belong to the household.");
-    }
-
-    if (userId !== input.debtorId && userId !== input.creditorId) {
-      throw new ApiError(403, "Only the debtor or creditor can record this settlement.");
     }
 
     const debts = await tx.debt.findMany({
@@ -246,6 +259,10 @@ export async function createDebtSettlement(
       select: { id: true, remainingAmount: true, status: true },
       orderBy: [{ createdAt: "asc" }, { id: "asc" }],
     });
+
+    if (!debts.length) {
+      throw new ApiError(404, "No outstanding debt exists between these members.");
+    }
 
     const requestedAmount = new Prisma.Decimal(input.amount);
     const outstanding = debts.reduce((sum, debt) => sum.add(debt.remainingAmount), new Prisma.Decimal(0));

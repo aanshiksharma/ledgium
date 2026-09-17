@@ -55,6 +55,11 @@ export function TransactionForm({
       return
     }
 
+    if (Math.abs(numericAmount) > 1000000) {
+      setError("Amount cannot exceed 1,000,000.00.")
+      return
+    }
+
     try {
       await onSubmit({
         accountId,
@@ -118,6 +123,8 @@ export function TransactionForm({
           <span className="font-medium">Amount</span>
           <input
             type="number"
+            min="-1000000"
+            max="1000000"
             step="0.01"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}

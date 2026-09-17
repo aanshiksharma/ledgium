@@ -120,19 +120,19 @@ function buildDebtPairs(
       ? creditor.amount
       : debtor.amount;
 
-    if (amount.greaterThan(0)) {
-      debts.push({
-        debtorId: debtor.userId,
-        creditorId: creditor.userId,
-        amount,
-      });
-    }
+    if (amount.lessThanOrEqualTo(0)) break;
+
+    debts.push({
+      debtorId: debtor.userId,
+      creditorId: creditor.userId,
+      amount,
+    });
 
     creditor.amount = creditor.amount.sub(amount);
     debtor.amount = debtor.amount.sub(amount);
 
-    if (creditor.amount.isZero()) creditorIndex += 1;
-    if (debtor.amount.isZero()) debtorIndex += 1;
+    if (creditor.amount.lessThanOrEqualTo(0.0001)) creditorIndex += 1;
+    if (debtor.amount.lessThanOrEqualTo(0.0001)) debtorIndex += 1;
   }
 
   return debts;
@@ -292,7 +292,6 @@ async function createOrUpdateExpense(
       await tx.expenseParticipant.deleteMany({
         where: { expenseId: existing.id },
       });
-      await tx.debt.deleteMany({ where: { householdExpenseId: existing.id } });
 
       await tx.expensePayer.createMany({
         data: payers.map((payer) => ({
@@ -311,20 +310,36 @@ async function createOrUpdateExpense(
         })),
       });
 
-      if (debtPairs.length > 0) {
-        await tx.debt.createMany({
-          data: debtPairs.map((debt) => ({
-            debtorId: debt.debtorId,
-            creditorId: debt.creditorId,
-            amount: debt.amount,
-            remainingAmount: debt.amount,
-            currency: household.currency,
-            sourceType: "HOUSEHOLD",
-            householdExpenseId: existing.id,
-            description: input.description.trim(),
-            status: "OPEN",
-          })),
+      const settledDebt = await tx.debt.findFirst({
+        where: {
+          householdExpenseId: existing.id,
+          settlementAllocations: { some: {} },
+        },
+        select: { id: true },
+      });
+
+      if (settledDebt) {
+        await tx.debt.updateMany({
+          where: { householdExpenseId: existing.id },
+          data: { description: input.description.trim() },
         });
+      } else {
+        await tx.debt.deleteMany({ where: { householdExpenseId: existing.id } });
+        if (debtPairs.length > 0) {
+          await tx.debt.createMany({
+            data: debtPairs.map((debt) => ({
+              debtorId: debt.debtorId,
+              creditorId: debt.creditorId,
+              amount: debt.amount,
+              remainingAmount: debt.amount,
+              currency: household.currency,
+              sourceType: "HOUSEHOLD",
+              householdExpenseId: existing.id,
+              description: input.description.trim(),
+              status: "OPEN",
+            })),
+          });
+        }
       }
 
       return tx.householdExpense.findUniqueOrThrow({

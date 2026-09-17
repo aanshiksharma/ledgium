@@ -8,6 +8,8 @@ export const createTransactionSchema = z.object({
   amount: z.coerce
     .number()
     .finite()
+    .min(-1000000, "Amount cannot be less than -1,000,000.00.")
+    .max(1000000, "Amount cannot exceed 1,000,000.00.")
     .refine((value) => value !== 0, "Amount cannot be zero."),
   description: z.string().trim().min(1).max(255),
   transactionDate: dateSchema,

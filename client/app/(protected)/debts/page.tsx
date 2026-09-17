@@ -1,2 +1,4 @@
 import { DebtsPage } from "@/features/debts"
-export default function Page() { return <DebtsPage /> }
+export default function Page() {
+  return <DebtsPage />
+}

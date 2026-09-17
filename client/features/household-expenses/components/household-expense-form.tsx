@@ -102,9 +102,9 @@ export function HouseholdExpenseForm({
 
   const [splitMode, setSplitMode] = useState<SplitMode>(() =>
     expense?.participants.length &&
-    expense.participants.some(
-      (participant) => participant.sharePercentage !== null
-    )
+      expense.participants.some(
+        (participant) => participant.sharePercentage !== null
+      )
       ? "custom"
       : "equal"
   )
@@ -130,7 +130,12 @@ export function HouseholdExpenseForm({
   const [error, setError] = useState<string | null>(null)
 
   const hasRecordedSettlements = useMemo(
-    () => expense?.debts.some((debt) => (debt._count?.settlements ?? 0) > 0) ?? false,
+    () =>
+      expense?.debts.some(
+        (debt) =>
+          (debt._count?.settlementAllocations ??
+            0) > 0
+      ) ?? false,
     [expense]
   )
 
@@ -251,12 +256,15 @@ export function HouseholdExpenseForm({
       !categoryId ||
       amountCents === null ||
       amountCents <= 0 ||
+      amountCents > 100000000 ||
       !expenseDate ||
       !payerId ||
       participantIds.length === 0
     ) {
       setError(
-        "Expense name, category, total amount, payer, participants, and date are required."
+        amountCents !== null && amountCents > 100000000
+          ? "Total amount cannot exceed 1,000,000.00."
+          : "Expense name, category, total amount, payer, participants, and date are required."
       )
       return
     }
@@ -364,6 +372,7 @@ export function HouseholdExpenseForm({
             <input
               type="number"
               min="0.01"
+              max="1000000"
               step="0.01"
               value={totalAmount}
               onChange={(event) => setTotalAmount(event.target.value)}
@@ -391,9 +400,8 @@ export function HouseholdExpenseForm({
             return (
               <label
                 key={member.userId}
-                className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 text-sm transition ${
-                  selected ? "bg-muted/40" : "opacity-70"
-                }`}
+                className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 text-sm transition ${selected ? "bg-muted/40" : "opacity-70"
+                  }`}
               >
                 <input
                   type="checkbox"
@@ -483,6 +491,7 @@ export function HouseholdExpenseForm({
                 <input
                   type="number"
                   min="0"
+                  max="1000000"
                   step="0.01"
                   value={customAmounts[member.userId] ?? ""}
                   onChange={(event) =>
@@ -508,11 +517,10 @@ export function HouseholdExpenseForm({
         </div>
 
         <div
-          className={`rounded-xl border p-3 text-sm ${
-            distributionBalanced
-              ? "border-primary/30 bg-primary/5"
-              : "border-destructive/30 bg-destructive/5"
-          }`}
+          className={`rounded-xl border p-3 text-sm ${distributionBalanced
+            ? "border-primary/30 bg-primary/5"
+            : "border-destructive/30 bg-destructive/5"
+            }`}
         >
           <div className="flex items-center justify-between gap-4">
             <span>

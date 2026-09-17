@@ -1,9 +1,10 @@
 import crypto from "crypto";
 import { prisma } from "../../db/prisma.js";
+import { env } from "../../config/env.js"
 
 const REFRESH_TOKEN_BYTES = 48;
 
-export const REFRESH_TOKEN_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000;
+export const REFRESH_TOKEN_EXPIRY_MS = env.REFRESH_TOKEN_EXPIRES_IN_DAYS * 24 * 60 * 60 * 1000;
 
 function generateRefreshToken(): string {
   return crypto.randomBytes(REFRESH_TOKEN_BYTES).toString("base64url");

@@ -15,9 +15,57 @@ type ApiEnvelope<T> = {
   issues?: Record<string, string[]>
 }
 
+const AUTH_BYPASS_PATHS = [
+  "/auth/login",
+  "/auth/register",
+  "/auth/refresh",
+  "/auth/logout",
+  "/auth/google",
+]
+
+let refreshTokenPromise: Promise<boolean> | null = null
+
+async function performTokenRefresh(): Promise<boolean> {
+  if (refreshTokenPromise) {
+    return refreshTokenPromise
+  }
+
+  refreshTokenPromise = (async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      })
+
+      if (!response.ok) {
+        return false
+      }
+
+      let body: ApiEnvelope<unknown> | null = null
+      try {
+        body = (await response.json()) as ApiEnvelope<unknown>
+      } catch {
+        body = null
+      }
+
+      return body?.success === true
+    } catch {
+      return false
+    } finally {
+      refreshTokenPromise = null
+    }
+  })()
+
+  return refreshTokenPromise
+}
+
 export async function apiRequest<T>(
   path: string,
-  init: RequestInit = {}
+  init: RequestInit = {},
+  isRetry = false
 ): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
@@ -27,6 +75,17 @@ export async function apiRequest<T>(
     },
     credentials: "include",
   })
+
+  if (
+    response.status === 401 &&
+    !isRetry &&
+    !AUTH_BYPASS_PATHS.includes(path)
+  ) {
+    const refreshed = await performTokenRefresh()
+    if (refreshed) {
+      return apiRequest<T>(path, init, true)
+    }
+  }
 
   if (response.status === 204) {
     return undefined as T

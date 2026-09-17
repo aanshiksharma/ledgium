@@ -57,21 +57,23 @@ export async function getDashboard(userId: string, householdId: string, from?: D
   });
   const sharedExpenseTotal = householdExpenses.reduce((sum, expense) => sum.add(expense.totalAmount), new Prisma.Decimal(0));
 
-  const openHouseholdDebts = await prisma.debt.findMany({
-    where: {
-      sourceType: "HOUSEHOLD",
-      isActive: true,
-      householdExpense: { householdId },
-    },
-    select: {
-      remainingAmount: true,
-    },
-  });
+  const debtDateFilter = from || to
+    ? { householdExpense: { householdId, expenseDate: { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) } } }
+    : { householdExpense: { householdId } };
 
-  const outstandingDebtTotal = openHouseholdDebts.reduce(
-    (sum, debt) => sum.add(debt.remainingAmount),
-    new Prisma.Decimal(0),
-  );
+  const [userOwedDebts, userReceivableDebts] = await prisma.$transaction([
+    prisma.debt.findMany({
+      where: { sourceType: "HOUSEHOLD", isActive: true, debtorId: userId, ...debtDateFilter },
+      select: { remainingAmount: true },
+    }),
+    prisma.debt.findMany({
+      where: { sourceType: "HOUSEHOLD", isActive: true, creditorId: userId, ...debtDateFilter },
+      select: { remainingAmount: true },
+    }),
+  ]);
+
+  const amountOwed = userOwedDebts.reduce((sum, debt) => sum.add(debt.remainingAmount), new Prisma.Decimal(0));
+  const amountReceivable = userReceivableDebts.reduce((sum, debt) => sum.add(debt.remainingAmount), new Prisma.Decimal(0));
 
   return {
     household,
@@ -81,6 +83,11 @@ export async function getDashboard(userId: string, householdId: string, from?: D
     recentTransactions,
     categoryTotals: categoryTotals.map((item) => ({ category: item.categoryId ? (categoryMap.get(item.categoryId) ?? null) : null, amount: item._sum.amount ?? new Prisma.Decimal(0) })),
     sharedExpenses: { total: sharedExpenseTotal, count: householdExpenses.length, currency: household.currency },
-    householdDebts: { outstandingTotal: outstandingDebtTotal, openCount: openHouseholdDebts.length, currency: household.currency },
+    householdDebts: {
+      amountOwed,
+      amountReceivable,
+      openCount: userOwedDebts.length + userReceivableDebts.length,
+      currency: household.currency,
+    },
   };
 }

@@ -57,7 +57,7 @@ export function DebtSummary({
       <div className="rounded-2xl border p-6">
         <p className="font-medium">No outstanding debts</p>
         <p className="mt-1 text-sm text-muted-foreground">
-          Everyone is currently settled up for shared household expenses.
+          You are currently settled up for shared household expenses.
         </p>
       </div>
     )
@@ -67,9 +67,8 @@ export function DebtSummary({
     <>
       <div className="grid gap-4 lg:grid-cols-2">
         {balances.map((balance) => {
-          const canSettle =
-            balance.debtor.id === currentUserId ||
-            balance.creditor.id === currentUserId
+          const canSettle = balance.creditor.id === currentUserId
+
           return (
             <article
               key={`${balance.debtor.id}-${balance.creditor.id}`}
@@ -78,7 +77,12 @@ export function DebtSummary({
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="font-semibold">
-                    {balance.debtor.name} owes {balance.creditor.name}
+                    {balance.debtor.id === currentUserId
+                      ? "You owe "
+                      : `${balance.debtor.name} owes `}
+                    {balance.creditor.id === currentUserId
+                      ? "you"
+                      : balance.creditor.name}
                   </p>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {balance.debts.length}{" "}

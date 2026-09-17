@@ -40,14 +40,11 @@ export function HouseholdExpenseList({
     <div className="space-y-3">
       {expenses.map((expense) => {
         const hasSettlements = expense.debts.some(
-          (debt) => (debt._count?.settlements ?? 0) > 0
+          (debt) => (debt._count?.settlementAllocations ?? 0) > 0
         )
 
         return (
-          <article
-            key={expense.id}
-            className="rounded-2xl border bg-card p-5"
-          >
+          <article key={expense.id} className="rounded-2xl border bg-card p-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <h3 className="font-semibold">{expense.description}</h3>

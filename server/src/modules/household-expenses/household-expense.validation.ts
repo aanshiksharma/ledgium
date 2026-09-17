@@ -6,6 +6,7 @@ const money = z
   .coerce.number()
   .finite()
   .positive()
+  .max(1000000, "Amount cannot exceed 1,000,000.00.")
   .refine((value) => Number.isInteger(Math.round(value * 100)), {
     message: "Amount can have at most two decimal places.",
   });

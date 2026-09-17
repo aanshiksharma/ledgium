@@ -16,7 +16,7 @@ export const listHouseholdSettlementsSchema = z.object({
 export const createSettlementSchema = z.object({
   debtorId: z.string().uuid(),
   creditorId: z.string().uuid(),
-  amount: z.coerce.number().finite().positive(),
+  amount: z.coerce.number().finite().positive().max(1000000, "Amount cannot exceed 1,000,000.00."),
   settledAt: z.coerce.date(),
   notes: z.string().trim().max(10000).nullable().optional(),
 });

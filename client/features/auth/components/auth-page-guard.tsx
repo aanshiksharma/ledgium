@@ -36,7 +36,7 @@ export function AuthPageGuard({ children }: AuthPageGuardProps) {
 
   useEffect(() => {
     if (!isCheckingAuth && status === "authenticated") {
-      router.replace("/dashboard")
+      router.replace("/overview")
     }
   }, [isCheckingAuth, status, router])
 

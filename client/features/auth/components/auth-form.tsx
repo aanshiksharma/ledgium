@@ -28,7 +28,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const next = searchParams.get("next")
 
   const redirectPath =
-    next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard"
+    next && next.startsWith("/") && !next.startsWith("//") ? next : "/overview"
 
   async function handleSubmit(event: SubmitEvent) {
     event.preventDefault()

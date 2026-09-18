@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 
 import { useAuth } from "@/features/auth/hooks/use-auth"
 
-const DEFAULT_AUTHENTICATED_ROUTE = "/dashboard"
+const DEFAULT_AUTHENTICATED_ROUTE = "/overview"
 
 export function LandingAuthRedirector() {
   const router = useRouter()

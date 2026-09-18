@@ -6,70 +6,88 @@ import {
   ReceiptText,
   Settings,
   Tags,
-  Users
+  Users,
 } from "lucide-react"
 
 export type NavigationItem = {
-  label: string;
-  href: string;
-  icon: typeof LayoutDashboard;
+  label: string
+  href: string
+  icon: typeof LayoutDashboard
   enabled: boolean
 }
 
-export const navigationItems: NavigationItem[] = [
-  {
-    label: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-    enabled: true
-  },
+export type NavigationGroup = {
+  title?: string
+  items: NavigationItem[]
+}
 
+export const navigationGroups: NavigationGroup[] = [
   {
-    label: "Expenses",
-    href: "/expenses",
-    icon: ReceiptText,
-    enabled: true
+    items: [
+      {
+        label: "Overview",
+        href: "/overview",
+        icon: LayoutDashboard,
+        enabled: true,
+      },
+    ],
   },
-
   {
-    label: "Accounts",
-    href: "/accounts",
-    icon: CreditCard,
-    enabled: true
+    title: "Household",
+    items: [
+      {
+        label: "Expenses",
+        href: "/expenses",
+        icon: ReceiptText,
+        enabled: true,
+      },
+      {
+        label: "Debts and Settlements",
+        href: "/debts-and-settlements",
+        icon: HandCoins,
+        enabled: true,
+      },
+      {
+        label: "Members",
+        href: "/members",
+        icon: Users,
+        enabled: true,
+      },
+    ],
   },
-
   {
-    label: "Transactions",
-    href: "/transactions",
-    icon: ListChecks,
-    enabled: true
+    title: "Personal",
+    items: [
+      {
+        label: "Accounts",
+        href: "/accounts",
+        icon: CreditCard,
+        enabled: true,
+      },
+
+      {
+        label: "Transactions",
+        href: "/transactions",
+        icon: ListChecks,
+        enabled: true,
+      },
+    ],
   },
-
   {
-    label: "Categories",
-    href: "/categories",
-    icon: Tags,
-    enabled: true
-  },
-
-  {
-    label: "Debts and Settlements",
-    href: "/debts",
-    icon: HandCoins,
-    enabled: true
-  },
-
-  {
-    label: "Members",
-    href: "/members",
-    icon: Users,
-    enabled: true
-  },
-
-  {
-    label: "Settings",
-    href: "/settings",
-    icon: Settings,
-    enabled: false
+    title: "General",
+    items: [
+      {
+        label: "Categories",
+        href: "/categories",
+        icon: Tags,
+        enabled: true,
+      },
+      {
+        label: "Settings",
+        href: "/settings",
+        icon: Settings,
+        enabled: false,
+      },
+    ],
   },
 ]

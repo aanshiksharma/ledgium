@@ -1,0 +1,139 @@
+import Link from "next/link"
+
+import { money, cn } from "@/lib/utils"
+
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardAction,
+  CardContent,
+} from "@/components/ui/card"
+import { Item, ItemHeader, ItemTitle, ItemContent } from "@/components/ui/item"
+import { Table, TableBody, TableRow, TableCell } from "@/components/ui/table"
+
+import { useAuth } from "@/features/auth"
+import { useDebts } from "@/features/debts"
+import { useHousehold } from "@/features/households"
+import { Dashboard, useDashboard } from "@/features/dashboard"
+import { useEffect, useState } from "react"
+
+export function DebtsOverview() {
+  const { user } = useAuth()
+  const { currentHousehold } = useHousehold()
+  const { balances } = useDebts(currentHousehold ? currentHousehold.id : null)
+  const { dashboard } = useDashboard(
+    currentHousehold ? currentHousehold.id : null
+  )
+
+  const [householdDebts, setHouseholdDebts] = useState<
+    Dashboard["householdDebts"] | undefined
+  >(dashboard?.householdDebts)
+
+  useEffect(() => {
+    setHouseholdDebts(dashboard?.householdDebts)
+  }, [dashboard])
+
+  if (!dashboard || !householdDebts) return <>Loading Dashboard...</>
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Active Debts</CardTitle>
+
+        <CardAction>
+          <Link
+            href="/debts-and-settlements"
+            className="text-xs hover:underline"
+          >
+            See All
+          </Link>
+        </CardAction>
+      </CardHeader>
+
+      <CardContent>
+        <div className="flex flex-col gap-4 lg:gap-6">
+          <div className="flex flex-wrap gap-4">
+            <Item variant="muted" className="flex-1 basis-35">
+              <ItemHeader>
+                <ItemTitle>You owe</ItemTitle>
+              </ItemHeader>
+
+              <ItemContent>
+                <p className="text-2xl font-semibold tracking-tight text-loss">
+                  {money(householdDebts.amountOwed, householdDebts?.currency)}
+                </p>
+              </ItemContent>
+            </Item>
+
+            <Item variant="muted" className="flex-1 basis-35">
+              <ItemHeader>
+                <ItemTitle>You are owed</ItemTitle>
+              </ItemHeader>
+
+              <ItemContent>
+                <p className="text-2xl font-semibold tracking-tight text-profit">
+                  {money(
+                    householdDebts.amountReceivable,
+                    householdDebts.currency
+                  )}
+                </p>
+              </ItemContent>
+            </Item>
+
+            <Item variant="muted" className="flex-1 basis-35">
+              <ItemHeader>
+                <ItemTitle>Net Sum</ItemTitle>
+              </ItemHeader>
+
+              <ItemContent>
+                <p
+                  className={cn(
+                    "text-2xl font-semibold tracking-tight",
+                    Number(householdDebts.amountOwed) -
+                      Number(householdDebts.amountReceivable) >
+                      0
+                      ? "text-loss"
+                      : "text-profit"
+                  )}
+                >
+                  {money(
+                    Math.abs(
+                      Number(householdDebts.amountOwed) -
+                        Number(householdDebts.amountReceivable)
+                    ),
+                    householdDebts.currency
+                  )}
+                </p>
+              </ItemContent>
+            </Item>
+          </div>
+
+          {balances
+            ?.filter((balance) => balance.debtor.id === user?.id)
+            .filter((_, index) => index < 6).length === 0 && <p>no debts</p>}
+
+          <div className="overflow-hidden rounded-xl">
+            <Table>
+              <TableBody>
+                {balances
+                  ?.filter((balance) => balance.debtor.id === user?.id)
+                  .filter((_, index) => index < 6)
+                  .map((balance, index) => {
+                    return (
+                      <TableRow key={index} className="border-none">
+                        <TableCell>{balance.creditor.name}</TableCell>
+                        <TableCell align="right">
+                          {money(balance.outstandingAmount, balance.currency)}
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}

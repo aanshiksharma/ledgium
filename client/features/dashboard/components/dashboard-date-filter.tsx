@@ -1,8 +1,18 @@
-"use client"
-
 import { useEffect, useState } from "react"
+
+import { format } from "date-fns"
+import { Calendar as CalendarIcon, Filter } from "lucide-react"
+
+import { Calendar } from "@/components/ui/calendar"
 import { Button } from "@/components/ui/button"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+
 import type { DashboardFilters } from "../types/dashboard.types"
+import { useSidebar } from "@/components/ui/sidebar"
 
 type Props = {
   value: DashboardFilters
@@ -14,24 +24,23 @@ function monthBounds(offset: number) {
   const d = new Date()
   d.setMonth(d.getMonth() + offset)
   return {
-    from: new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10),
-    to: new Date(d.getFullYear(), d.getMonth() + 1, 0)
-      .toISOString()
-      .slice(0, 10),
+    from: new Date(d.getFullYear(), d.getMonth(), 1),
+    to: new Date(d.getFullYear(), d.getMonth() + 1, 0),
   }
 }
 
 export function DashboardDateFilter({ value, onApply, disabled }: Props) {
-  const [from, setFrom] = useState(value.from ?? "")
-  const [to, setTo] = useState(value.to ?? "")
+  const [from, setFrom] = useState<Date>()
+  const [to, setTo] = useState<Date>()
   const [error, setError] = useState<string | null>(null)
+  const { isMobile } = useSidebar()
 
   useEffect(() => {
-    setFrom(value.from ?? "")
-    setTo(value.to ?? "")
+    setFrom(value.from)
+    setTo(value.to)
   }, [value.from, value.to])
 
-  const apply = (nextFrom: string, nextTo: string) => {
+  const apply = (nextFrom?: Date, nextTo?: Date) => {
     if (nextFrom && nextTo && nextFrom > nextTo) {
       setError("The start date cannot be after the end date.")
       return
@@ -39,93 +48,152 @@ export function DashboardDateFilter({ value, onApply, disabled }: Props) {
 
     setError(null)
     onApply({
-      from: nextFrom || undefined,
-      to: nextTo || undefined,
+      from: nextFrom,
+      to: nextTo,
     })
   }
 
   return (
-    <div className="rounded-2xl border p-4">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
-        <label className="flex flex-1 flex-col gap-1 text-sm">
-          <span className="font-medium">From</span>
-          <input
-            type="date"
-            value={from}
-            disabled={disabled}
-            onChange={(e) => setFrom(e.target.value)}
-            className="h-9 rounded-md border bg-background px-3"
-          />
-        </label>
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="ghost"
+          size={isMobile ? "icon" : "default"}
+          className="flex items-center gap-2"
+          disabled={disabled}
+        >
+          <Filter />
+          {!isMobile && "Filter by date"}
+        </Button>
+      </PopoverTrigger>
 
-        <label className="flex flex-1 flex-col gap-1 text-sm">
-          <span className="font-medium">To</span>
-          <input
-            type="date"
-            value={to}
-            disabled={disabled}
-            onChange={(e) => setTo(e.target.value)}
-            className="h-9 rounded-md border bg-background px-3"
-          />
-        </label>
+      <PopoverContent align="end" className="w-full max-w-xs">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              data-empty={!from}
+              className="w-full justify-start text-left font-normal data-[empty=true]:text-muted-foreground"
+            >
+              <CalendarIcon />
+              {from ? format(from, "PPP") : <span>Pick the starting date</span>}
+            </Button>
+          </PopoverTrigger>
 
-        <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            disabled={disabled}
-            onClick={() => {
-              const b = monthBounds(0)
-              setFrom(b.from)
-              setTo(b.to)
-              apply(b.from, b.to)
-            }}
-          >
-            This month
-          </Button>
+          <PopoverContent className="w-auto p-0">
+            <Calendar mode="single" selected={from} onSelect={setFrom} />
+          </PopoverContent>
+        </Popover>
 
-          <Button
-            type="button"
-            variant="outline"
-            disabled={disabled}
-            onClick={() => {
-              const b = monthBounds(-1)
-              setFrom(b.from)
-              setTo(b.to)
-              apply(b.from, b.to)
-            }}
-          >
-            Last month
-          </Button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              data-empty={!to}
+              className="w-full justify-start text-left font-normal data-[empty=true]:text-muted-foreground"
+            >
+              <CalendarIcon />
+              {to ? format(to, "PPP") : <span>Pick the ending date</span>}
+            </Button>
+          </PopoverTrigger>
 
-          <Button
-            type="button"
-            variant="outline"
-            disabled={disabled}
-            onClick={() => {
-              setFrom("")
-              setTo("")
-              apply("", "")
-            }}
-          >
-            All time
-          </Button>
+          <PopoverContent className="w-auto p-0">
+            <Calendar mode="single" selected={to} onSelect={setTo} />
+          </PopoverContent>
+        </Popover>
 
-          <Button
-            type="button"
-            disabled={disabled}
-            onClick={() => apply(from, to)}
-          >
-            Apply
-          </Button>
+        <div className="flex flex-col gap-2">
+          <p className="text-xs text-muted-foreground">Quick filters</p>
+
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              size="xs"
+              variant="outline"
+              disabled={disabled}
+              onClick={() => {
+                const b = monthBounds(0)
+                setFrom(new Date(b.from))
+                setTo(new Date(b.to))
+                apply(b.from, b.to)
+              }}
+            >
+              This month
+            </Button>
+            <Button
+              type="button"
+              size="xs"
+              variant="outline"
+              disabled={disabled}
+              onClick={() => {
+                const b = monthBounds(0)
+                setFrom(new Date(b.from))
+                setTo(new Date(b.to))
+                apply(b.from, b.to)
+              }}
+            >
+              This month
+            </Button>
+            <Button
+              type="button"
+              size="xs"
+              variant="outline"
+              disabled={disabled}
+              onClick={() => {
+                const b = monthBounds(0)
+                setFrom(new Date(b.from))
+                setTo(new Date(b.to))
+                apply(b.from, b.to)
+              }}
+            >
+              This month
+            </Button>
+
+            <Button
+              type="button"
+              size="xs"
+              variant="outline"
+              disabled={disabled}
+              onClick={() => {
+                const b = monthBounds(-1)
+                setFrom(new Date(b.from))
+                setTo(new Date(b.to))
+                apply(b.from, b.to)
+              }}
+            >
+              Last month
+            </Button>
+
+            <Button
+              type="button"
+              size="xs"
+              variant="outline"
+              disabled={disabled}
+              onClick={() => {
+                setFrom(undefined)
+                setTo(undefined)
+                apply(undefined, undefined)
+              }}
+            >
+              All time
+            </Button>
+          </div>
         </div>
-      </div>
+
+        <Button
+          type="button"
+          disabled={disabled}
+          onClick={() => apply(from, to)}
+        >
+          Apply
+        </Button>
+      </PopoverContent>
 
       {error ? (
         <p className="mt-2 text-sm text-destructive" role="alert">
           {error}
         </p>
       ) : null}
-    </div>
+    </Popover>
   )
 }

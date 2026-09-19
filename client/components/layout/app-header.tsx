@@ -22,7 +22,7 @@ export function AppHeader() {
         </Button>
       </div>
 
-      <p className="capitalize">{label}</p>
+      <h1 className="capitalize">{label}</h1>
 
       <div className="justify-self-end"></div>
     </header>

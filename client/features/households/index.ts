@@ -1,6 +1,10 @@
 export { HouseholdSelector } from "./components/household-selector"
 
-export { CreateHouseholdForm } from "./components/create-household-form"
+export { NewHouseholdForm } from "./components/new-household-form"
+export { JoinHouseholdForm } from "./components/join-household-form"
+
+export { NewHouseholdPage } from "./components/new-household-page"
+export { JoinHouseholdPage } from "./components/join-household-page"
 
 export { useHousehold } from "./hooks/use-household"
 export type * from "./types/household.types"

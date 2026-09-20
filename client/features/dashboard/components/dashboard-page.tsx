@@ -1,17 +1,23 @@
 "use client"
 
 import { useState } from "react"
-import { CreateHouseholdForm, useHousehold } from "@/features/households"
+import Link from "next/link"
+
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+
+import { useHousehold } from "@/features/households"
 import { useDashboard } from "../hooks/use-dashboard"
 import type { DashboardFilters } from "../types/dashboard.types"
 import { DashboardDateFilter } from "./dashboard-date-filter"
+
 import { DashboardSummary } from "./dashboard-summary"
 import { AccountBalances } from "./account-balances"
 import { CategoryBreakdown } from "./category-breakdown"
 import { RecentTransactions } from "./recent-transactions"
 import { HouseholdOverview } from "./household-overview"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
+import { NoCurrentHousehold, ZeroHouseholds } from "./error-states"
+
+import { ProgressBar } from "@/components/common/progress-bar"
 
 export function DashboardPage() {
   const {
@@ -33,29 +39,17 @@ export function DashboardPage() {
 
   if (householdLoading)
     return (
-      <section className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">Loading dashboard...</p>
-      </section>
+      <div className="flex h-full items-center justify-center">
+        <ProgressBar
+          loading={householdLoading}
+          loadingText="Loading Households"
+        />
+      </div>
     )
 
-  if (households.length === 0)
-    return (
-      <section className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <CreateHouseholdForm />
-      </section>
-    )
+  if (households.length === 0) return <ZeroHouseholds />
 
-  if (!currentHousehold)
-    return (
-      <section className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">
-          No household is currently selected.
-        </p>
-      </section>
-    )
+  if (!currentHousehold) return <NoCurrentHousehold households={households} />
 
   return (
     <div className="flex flex-col gap-6">
@@ -127,8 +121,6 @@ export function DashboardPage() {
       {dashboardLoading || !dashboard ? (
         <p className="text-sm text-muted-foreground">Loading dashboard...</p>
       ) : null}
-
-      {dashboard ? <></> : null}
     </div>
   )
 }

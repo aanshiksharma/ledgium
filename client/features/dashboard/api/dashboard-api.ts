@@ -7,8 +7,8 @@ export async function getDashboard(
 ): Promise<Dashboard> {
   const params = new URLSearchParams()
 
-  if (filters?.from) params.set("from", filters.from)
-  if (filters?.to) params.set("to", filters.to)
+  if (filters?.from) params.set("from", filters.from.toString())
+  if (filters?.to) params.set("to", filters.to.toString())
 
   const query = params.toString()
 

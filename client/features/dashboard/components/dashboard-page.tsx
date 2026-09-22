@@ -8,7 +8,6 @@ import { Item, ItemActions, ItemHeader, ItemTitle } from "@/components/ui/item"
 import { useHousehold } from "@/features/households"
 import { useDashboard } from "../hooks/use-dashboard"
 import type { DashboardFilters } from "../types/dashboard.types"
-import { DashboardDateFilter } from "./dashboard-date-filter"
 
 import { DashboardSummary } from "./dashboard-summary"
 import { AccountBalances } from "./account-balances"
@@ -83,12 +82,6 @@ export function DashboardPage() {
 
             <TabsTrigger value="personal">Personal</TabsTrigger>
           </TabsList>
-
-          <DashboardDateFilter
-            value={filters}
-            onApply={setFilters}
-            disabled={dashboardLoading}
-          />
         </div>
 
         <TabsContent value="household">

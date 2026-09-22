@@ -169,8 +169,6 @@ async function assertEditableAfterSettlement(
   input: ExpenseInput,
   existing: {
     totalAmount: Prisma.Decimal;
-    categoryId: string | null;
-    expenseDate: Date;
     payers: Array<{ userId: string; paidAmount: Prisma.Decimal }>;
     participants: Array<{ userId: string; shareAmount: Prisma.Decimal }>;
   },
@@ -183,7 +181,7 @@ async function assertEditableAfterSettlement(
     select: { id: true },
   });
 
-  if (!settledDebt) return;
+  if (!settledDebt) return false;
 
   const nextPayers = toDecimalPayers(input.payers);
   const nextParticipants = toDecimalParticipants(input.participants);
@@ -221,6 +219,45 @@ async function assertEditableAfterSettlement(
       "This expense has recorded settlements and its financial distribution can no longer be changed.",
     );
   }
+
+  return true;
+}
+
+async function getExpenseWithRelations(expenseId: string) {
+  return prisma.householdExpense.findUniqueOrThrow({
+    where: { id: expenseId },
+    include: {
+      category: true,
+      creator: {
+        select: { id: true, name: true, email: true, imageUrl: true },
+      },
+      payers: {
+        include: {
+          user: {
+            select: { id: true, name: true, email: true, imageUrl: true },
+          },
+        },
+      },
+      participants: {
+        include: {
+          user: {
+            select: { id: true, name: true, email: true, imageUrl: true },
+          },
+        },
+      },
+      debts: {
+        include: {
+          settlementAllocations: true,
+          debtor: {
+            select: { id: true, name: true, email: true, imageUrl: true },
+          },
+          creditor: {
+            select: { id: true, name: true, email: true, imageUrl: true },
+          },
+        },
+      },
+    },
+  });
 }
 
 async function createOrUpdateExpense(
@@ -231,13 +268,10 @@ async function createOrUpdateExpense(
 ) {
   await assertMembership(userId, householdId);
   await assertCategoryBelongsToHousehold(householdId, input.categoryId);
-  await assertMembersBelongToHousehold(
-    householdId,
-    [
-      ...input.payers.map((payer) => payer.userId),
-      ...input.participants.map((participant) => participant.userId),
-    ],
-  );
+  await assertMembersBelongToHousehold(householdId, [
+    ...input.payers.map((payer) => payer.userId),
+    ...input.participants.map((participant) => participant.userId),
+  ]);
 
   const household = await prisma.household.findUnique({
     where: { id: householdId },
@@ -251,7 +285,7 @@ async function createOrUpdateExpense(
   const debtPairs = buildDebtPairs(payers, participants);
   const expenseDate = normalizeDate(input.expenseDate);
 
-  return runInTransaction(async (tx) => {
+  const savedExpenseId = await runInTransaction(async (tx) => {
     const existing = expenseId
       ? await tx.householdExpense.findFirst({
           where: { id: expenseId, householdId },
@@ -267,13 +301,16 @@ async function createOrUpdateExpense(
     }
 
     if (existing) {
-      await assertEditableAfterSettlement(tx, expenseId!, input, {
-        totalAmount: existing.totalAmount,
-        categoryId: existing.categoryId,
-        expenseDate: existing.expenseDate,
-        payers: existing.payers,
-        participants: existing.participants,
-      });
+      const hasSettlements = await assertEditableAfterSettlement(
+        tx,
+        expenseId!,
+        input,
+        {
+          totalAmount: existing.totalAmount,
+          payers: existing.payers,
+          participants: existing.participants,
+        },
+      );
 
       await tx.householdExpense.update({
         where: { id: existing.id },
@@ -310,21 +347,16 @@ async function createOrUpdateExpense(
         })),
       });
 
-      const settledDebt = await tx.debt.findFirst({
-        where: {
-          householdExpenseId: existing.id,
-          settlementAllocations: { some: {} },
-        },
-        select: { id: true },
-      });
-
-      if (settledDebt) {
+      if (hasSettlements) {
         await tx.debt.updateMany({
           where: { householdExpenseId: existing.id },
           data: { description: input.description.trim() },
         });
       } else {
-        await tx.debt.deleteMany({ where: { householdExpenseId: existing.id } });
+        await tx.debt.deleteMany({
+          where: { householdExpenseId: existing.id },
+        });
+
         if (debtPairs.length > 0) {
           await tx.debt.createMany({
             data: debtPairs.map((debt) => ({
@@ -342,40 +374,7 @@ async function createOrUpdateExpense(
         }
       }
 
-      return tx.householdExpense.findUniqueOrThrow({
-        where: { id: existing.id },
-        include: {
-          category: true,
-          creator: {
-            select: { id: true, name: true, email: true, imageUrl: true },
-          },
-          payers: {
-            include: {
-              user: {
-                select: { id: true, name: true, email: true, imageUrl: true },
-              },
-            },
-          },
-          participants: {
-            include: {
-              user: {
-                select: { id: true, name: true, email: true, imageUrl: true },
-              },
-            },
-          },
-          debts: {
-            include: {
-              settlementAllocations: true,
-              debtor: {
-                select: { id: true, name: true, email: true, imageUrl: true },
-              },
-              creditor: {
-                select: { id: true, name: true, email: true, imageUrl: true },
-              },
-            },
-          },
-        },
-      });
+      return existing.id;
     }
 
     const expense = await tx.householdExpense.create({
@@ -420,41 +419,13 @@ async function createOrUpdateExpense(
       });
     }
 
-    return tx.householdExpense.findUniqueOrThrow({
-      where: { id: expense.id },
-      include: {
-        category: true,
-        creator: {
-          select: { id: true, name: true, email: true, imageUrl: true },
-        },
-        payers: {
-          include: {
-            user: {
-              select: { id: true, name: true, email: true, imageUrl: true },
-            },
-          },
-        },
-        participants: {
-          include: {
-            user: {
-              select: { id: true, name: true, email: true, imageUrl: true },
-            },
-          },
-        },
-        debts: {
-          include: {
-            settlementAllocations: true,
-            debtor: {
-              select: { id: true, name: true, email: true, imageUrl: true },
-            },
-            creditor: {
-              select: { id: true, name: true, email: true, imageUrl: true },
-            },
-          },
-        },
-      },
-    });
+    return expense.id;
   });
+
+  // The transaction is intentionally committed before loading the full
+  // response graph. This prevents the expensive nested read from extending
+  // the lifetime of the interactive transaction.
+  return getExpenseWithRelations(savedExpenseId);
 }
 
 export async function createHouseholdExpense(

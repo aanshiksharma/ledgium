@@ -1,9 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { Item, ItemActions, ItemHeader, ItemTitle } from "@/components/ui/item"
 
 import { useHousehold } from "@/features/households"
 import { useDashboard } from "../hooks/use-dashboard"
@@ -15,9 +15,13 @@ import { AccountBalances } from "./account-balances"
 import { CategoryBreakdown } from "./category-breakdown"
 import { RecentTransactions } from "./recent-transactions"
 import { HouseholdOverview } from "./household-overview"
-import { NoCurrentHousehold, ZeroHouseholds } from "./error-states"
+import {
+  NoCurrentHousehold,
+  ZeroHouseholds,
+} from "../../households/components/error-states"
 
 import { ProgressBar } from "@/components/common/progress-bar"
+import { Button } from "@/components/ui/button"
 
 export function DashboardPage() {
   const {
@@ -53,6 +57,25 @@ export function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      {error && (
+        <div className="rounded-2xl border border-destructive/30 p-5">
+          <Item size="xs">
+            <ItemHeader>
+              <ItemTitle>{error}</ItemTitle>
+              <ItemActions>
+                <Button
+                  variant="outline"
+                  disabled={dashboardLoading}
+                  onClick={() => void refresh()}
+                >
+                  Retry
+                </Button>
+              </ItemActions>
+            </ItemHeader>
+          </Item>
+        </div>
+      )}
+
       <Tabs defaultValue="household">
         <div className="mb-4 flex items-start justify-between border-b">
           <TabsList variant="line">
@@ -69,13 +92,13 @@ export function DashboardPage() {
         </div>
 
         <TabsContent value="household">
-          {dashboard && (
-            <HouseholdOverview currentHousehold={currentHousehold} />
-          )}
+          <HouseholdOverview currentHouseholdId={currentHousehold.id} />
         </TabsContent>
 
         <TabsContent value="personal">
-          {dashboard && (
+          {dashboardLoading || !dashboard ? (
+            "Loading"
+          ) : (
             <div className="flex flex-col gap-4">
               <DashboardSummary
                 totalBalance={dashboard.totalBalance}
@@ -100,27 +123,6 @@ export function DashboardPage() {
           )}
         </TabsContent>
       </Tabs>
-
-      {error ? (
-        <div className="rounded-2xl border border-destructive/30 p-5">
-          <p className="text-sm text-destructive" role="alert">
-            {error}
-          </p>
-
-          <button
-            type="button"
-            className="mt-3 text-sm font-medium underline"
-            onClick={() => void refresh()}
-            disabled={dashboardLoading}
-          >
-            Retry
-          </button>
-        </div>
-      ) : null}
-
-      {dashboardLoading || !dashboard ? (
-        <p className="text-sm text-muted-foreground">Loading dashboard...</p>
-      ) : null}
     </div>
   )
 }

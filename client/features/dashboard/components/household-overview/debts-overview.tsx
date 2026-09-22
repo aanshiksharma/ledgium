@@ -14,17 +14,19 @@ import { Table, TableBody, TableRow, TableCell } from "@/components/ui/table"
 
 import { useAuth } from "@/features/auth"
 import { useDebts } from "@/features/debts"
-import { useHousehold } from "@/features/households"
 import { Dashboard, useDashboard } from "@/features/dashboard"
 import { useEffect, useState } from "react"
+import { Skeleton } from "@/components/ui/skeleton"
 
-export function DebtsOverview() {
+type Props = {
+  currentHouseholdId: string
+}
+
+export function DebtsOverview({ currentHouseholdId }: Props) {
   const { user } = useAuth()
-  const { currentHousehold } = useHousehold()
-  const { balances } = useDebts(currentHousehold ? currentHousehold.id : null)
-  const { dashboard } = useDashboard(
-    currentHousehold ? currentHousehold.id : null
-  )
+  const { isLoading: balanceLoading, balances } = useDebts(currentHouseholdId)
+  const { isLoading: dashboardLoading, dashboard } =
+    useDashboard(currentHouseholdId)
 
   const [householdDebts, setHouseholdDebts] = useState<
     Dashboard["householdDebts"] | undefined
@@ -33,8 +35,6 @@ export function DebtsOverview() {
   useEffect(() => {
     setHouseholdDebts(dashboard?.householdDebts)
   }, [dashboard])
-
-  if (!dashboard || !householdDebts) return <>Loading Dashboard...</>
 
   return (
     <Card>
@@ -60,9 +60,13 @@ export function DebtsOverview() {
               </ItemHeader>
 
               <ItemContent>
-                <p className="text-2xl font-semibold tracking-tight text-loss">
-                  {money(householdDebts.amountOwed, householdDebts?.currency)}
-                </p>
+                {!dashboard || dashboardLoading || !householdDebts ? (
+                  <Skeleton className="h-8 w-40 rounded-xl" />
+                ) : (
+                  <p className="text-2xl font-semibold tracking-tight text-loss">
+                    {money(householdDebts.amountOwed, householdDebts?.currency)}
+                  </p>
+                )}
               </ItemContent>
             </Item>
 
@@ -72,12 +76,16 @@ export function DebtsOverview() {
               </ItemHeader>
 
               <ItemContent>
-                <p className="text-2xl font-semibold tracking-tight text-profit">
-                  {money(
-                    householdDebts.amountReceivable,
-                    householdDebts.currency
-                  )}
-                </p>
+                {!dashboard || dashboardLoading || !householdDebts ? (
+                  <Skeleton className="h-8 w-40 rounded-xl" />
+                ) : (
+                  <p className="text-2xl font-semibold tracking-tight text-profit">
+                    {money(
+                      householdDebts.amountReceivable,
+                      householdDebts.currency
+                    )}
+                  </p>
+                )}
               </ItemContent>
             </Item>
 
@@ -87,51 +95,75 @@ export function DebtsOverview() {
               </ItemHeader>
 
               <ItemContent>
-                <p
-                  className={cn(
-                    "text-2xl font-semibold tracking-tight",
-                    Number(householdDebts.amountOwed) -
-                      Number(householdDebts.amountReceivable) >
-                      0
-                      ? "text-loss"
-                      : "text-profit"
-                  )}
-                >
-                  {money(
-                    Math.abs(
+                {!dashboard || dashboardLoading || !householdDebts ? (
+                  <Skeleton className="h-8 w-40 rounded-xl" />
+                ) : (
+                  <p
+                    className={cn(
+                      "text-2xl font-semibold tracking-tight",
                       Number(householdDebts.amountOwed) -
-                        Number(householdDebts.amountReceivable)
-                    ),
-                    householdDebts.currency
-                  )}
-                </p>
+                        Number(householdDebts.amountReceivable) >
+                        0
+                        ? "text-loss"
+                        : "text-profit"
+                    )}
+                  >
+                    {money(
+                      Math.abs(
+                        Number(householdDebts.amountOwed) -
+                          Number(householdDebts.amountReceivable)
+                      ),
+                      householdDebts.currency
+                    )}
+                  </p>
+                )}
               </ItemContent>
             </Item>
           </div>
 
-          {balances
-            ?.filter((balance) => balance.debtor.id === user?.id)
-            .filter((_, index) => index < 6).length === 0 && <p>no debts</p>}
-
-          <div className="overflow-hidden rounded-xl">
-            <Table>
-              <TableBody>
-                {balances
-                  ?.filter((balance) => balance.debtor.id === user?.id)
-                  .filter((_, index) => index < 6)
-                  .map((balance, index) => {
+          {!balances || balanceLoading ? (
+            <div className="overflow-hidden rounded-xl">
+              <Table>
+                <TableBody>
+                  {Array.from(new Array(4)).map((_, index) => {
                     return (
                       <TableRow key={index} className="border-none">
-                        <TableCell>{balance.creditor.name}</TableCell>
+                        <TableCell>
+                          <Skeleton className="h-4 w-40 rounded-xl" />
+                        </TableCell>
                         <TableCell align="right">
-                          {money(balance.outstandingAmount, balance.currency)}
+                          <Skeleton className="h-4 w-20 rounded-xl" />
                         </TableCell>
                       </TableRow>
                     )
                   })}
-              </TableBody>
-            </Table>
-          </div>
+                </TableBody>
+              </Table>
+            </div>
+          ) : balances.filter((balance) => balance.debtor.id === user?.id)
+              .length === 0 ? (
+            <p>no debts</p>
+          ) : (
+            <div className="overflow-hidden rounded-xl">
+              <Table>
+                <TableBody>
+                  {balances
+                    .filter((balance) => balance.debtor.id === user?.id)
+                    .filter((_, index) => index < 6)
+                    .map((balance, index) => {
+                      return (
+                        <TableRow key={index} className="border-none">
+                          <TableCell>{balance.creditor.name}</TableCell>
+                          <TableCell align="right">
+                            {money(balance.outstandingAmount, balance.currency)}
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

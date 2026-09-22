@@ -1,5 +1,7 @@
 import Link from "next/link"
 
+import { BadgeCheck } from "lucide-react"
+
 import { money, cn } from "@/lib/utils"
 
 import {
@@ -9,6 +11,13 @@ import {
   CardAction,
   CardContent,
 } from "@/components/ui/card"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
 import { Item, ItemHeader, ItemTitle, ItemContent } from "@/components/ui/item"
 import { Table, TableBody, TableRow, TableCell } from "@/components/ui/table"
 
@@ -142,7 +151,18 @@ export function DebtsOverview({ currentHouseholdId }: Props) {
             </div>
           ) : balances.filter((balance) => balance.debtor.id === user?.id)
               .length === 0 ? (
-            <p>no debts</p>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia>
+                  <BadgeCheck />
+                </EmptyMedia>
+                <EmptyTitle>You&apos;re all cleared up</EmptyTitle>
+                <EmptyDescription>
+                  There are no outstanding debts. You&apos;ll see debts when a
+                  member in your household adds an expense.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           ) : (
             <div className="overflow-hidden rounded-xl">
               <Table>

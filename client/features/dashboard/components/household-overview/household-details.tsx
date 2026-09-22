@@ -44,7 +44,7 @@ export function HouseholdDetails({ currentHouseholdId }: Props) {
             <Skeleton className="h-8 w-full rounded-xl" />
           ) : (
             <p>
-              <span className="capitalize">
+              <span>
                 {convertToRelativeDate(
                   new Date(currentHousehold.createdAt)
                 )}{" "}

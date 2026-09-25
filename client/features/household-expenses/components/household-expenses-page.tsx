@@ -2,20 +2,39 @@
 
 import { useMemo, useState } from "react"
 
-import { Button } from "@/components/ui/button"
-import { useHousehold } from "@/features/households"
+import {
+  LayoutGrid,
+  ListPlus,
+  SlidersHorizontal,
+  TextAlignJustify,
+} from "lucide-react"
 
-import { useHouseholdExpenses } from "../hooks/use-household-expenses"
-import type { HouseholdExpense } from "../types/household-expense.types"
-import { HouseholdExpenseForm } from "./household-expense-form"
-import { HouseholdExpenseList } from "./household-expense-list"
+import { Button } from "@/components/ui/button"
+import { Field } from "@/components/ui/field"
+import { Input } from "@/components/ui/input"
+
+import { ProgressBar } from "@/components/common/progress-bar"
+
+import { useIsMobile } from "@/hooks/use-mobile"
+
+import {
+  useHouseholdExpenses,
+  HouseholdExpenseList,
+} from "@/features/household-expenses"
+import { useHousehold, NoCurrentHousehold } from "@/features/households"
+import { HouseholdExpenseFormButton } from "./household-expense-form-button"
+import { ButtonGroup } from "@/components/ui/button-group"
 
 export function HouseholdExpensesPage() {
-  const { currentHousehold, isLoading: householdLoading } = useHousehold()
+  const {
+    currentHousehold,
+    households,
+    isLoading: householdLoading,
+  } = useHousehold()
 
-  const [formOpen, setFormOpen] = useState(false)
-  const [editingExpense, setEditingExpense] =
-    useState<HouseholdExpense | null>(null)
+  const isMobile = useIsMobile()
+
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list")
 
   const [from, setFrom] = useState("")
   const [to, setTo] = useState("")
@@ -31,135 +50,86 @@ export function HouseholdExpensesPage() {
     [from, to, offset]
   )
 
-  const {
-    expenses,
-    total,
-    isLoading,
-    isSubmitting,
-    error,
-    refresh,
-    create,
-    update,
-  } = useHouseholdExpenses(currentHousehold?.id ?? null, filters)
+  const { total, isLoading, isSubmitting, error, refresh } =
+    useHouseholdExpenses(currentHousehold?.id ?? null, filters)
 
-  if (householdLoading) {
+  if (householdLoading)
     return (
-      <p className="text-sm text-muted-foreground">Loading household...</p>
-    )
-  }
-
-  if (!currentHousehold) {
-    return (
-      <div className="rounded-2xl border p-6">
-        <h2 className="font-semibold">No household selected</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Select or create a household before recording shared expenses.
-        </p>
+      <div className="flex h-full items-center justify-center">
+        <ProgressBar
+          loading={householdLoading}
+          loadingText="Loading Household..."
+        />
       </div>
     )
-  }
 
-  function openCreate() {
-    setEditingExpense(null)
-    setFormOpen(true)
-  }
-
-  function openEdit(expense: HouseholdExpense) {
-    setEditingExpense(expense)
-    setFormOpen(true)
-  }
-
-  function closeForm() {
-    if (isSubmitting) return
-    setFormOpen(false)
-    setEditingExpense(null)
-  }
+  if (!currentHousehold) return <NoCurrentHousehold households={households} />
 
   return (
-    <section className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
+    <>
+      <section className="flex flex-col gap-4 lg:gap-6">
+        <header>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Shared expenses
+            Manage Expenses
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Record shared spending, split obligations, and track who owes whom.
-          </p>
-        </div>
+        </header>
 
-        <Button onClick={formOpen ? closeForm : openCreate}>
-          {formOpen ? "Close" : "Add expense"}
-        </Button>
-      </div>
+        <div className="flex items-center gap-2">
+          <Field className="flex-1">
+            <Input placeholder="Search expenses..." />
+          </Field>
 
-      {formOpen && (
-        <div className="rounded-2xl border bg-card p-6">
-          <HouseholdExpenseForm
-            key={editingExpense?.id ?? "new"}
-            householdId={currentHousehold.id}
-            currency={currentHousehold.currency}
-            expense={editingExpense}
+          <Button variant="outline" size="icon">
+            <SlidersHorizontal />
+          </Button>
+
+          <ButtonGroup>
+            <Button
+              variant={viewMode === "grid" ? "secondary" : "outline"}
+              size="icon"
+              onClick={() => setViewMode("grid")}
+            >
+              <LayoutGrid />
+            </Button>
+            <Button
+              variant={viewMode === "list" ? "secondary" : "outline"}
+              size="icon"
+              onClick={() => setViewMode("list")}
+            >
+              <TextAlignJustify />
+            </Button>
+          </ButtonGroup>
+
+          <HouseholdExpenseFormButton
             isSubmitting={isSubmitting}
-            onSubmit={async (input) => {
-              if (editingExpense) {
-                await update(editingExpense.id, input)
-              } else {
-                await create(input)
-              }
-
-              closeForm()
-            }}
-            onCancel={closeForm}
-          />
+            currentHousehold={currentHousehold}
+          >
+            {isMobile ? (
+              <Button size="icon">
+                <ListPlus />
+              </Button>
+            ) : (
+              <Button>Add Expense</Button>
+            )}
+          </HouseholdExpenseFormButton>
         </div>
-      )}
-
-      <div className="rounded-2xl border p-4">
-        <div className="grid gap-3 md:grid-cols-2">
-          <label className="space-y-1.5 text-sm">
-            <span className="font-medium">From</span>
-            <input
-              type="date"
-              value={from}
-              onChange={(event) => {
-                setFrom(event.target.value)
-                setOffset(0)
-              }}
-              className="h-10 w-full rounded-md border bg-background px-3"
-            />
-          </label>
-
-          <label className="space-y-1.5 text-sm">
-            <span className="font-medium">To</span>
-            <input
-              type="date"
-              value={to}
-              onChange={(event) => {
-                setTo(event.target.value)
-                setOffset(0)
-              }}
-              className="h-10 w-full rounded-md border bg-background px-3"
-            />
-          </label>
-        </div>
-      </div>
+      </section>
 
       {error && (
         <div className="flex items-center justify-between gap-4 rounded-xl border border-destructive/30 p-4 text-sm">
           <span>{error}</span>
-          <Button variant="outline" size="sm" onClick={() => void refresh()}>
+          <Button variant="outline" onClick={() => void refresh()}>
             Retry
           </Button>
         </div>
       )}
 
       <HouseholdExpenseList
-        expenses={expenses}
-        isLoading={isLoading}
-        onEdit={openEdit}
+        viewMode={viewMode}
+        currentHousehold={currentHousehold}
       />
 
-      {total > 50 && (
+      {
         <div className="flex items-center justify-between">
           <Button
             variant="outline"
@@ -181,7 +151,7 @@ export function HouseholdExpensesPage() {
             Next
           </Button>
         </div>
-      )}
-    </section>
+      }
+    </>
   )
 }

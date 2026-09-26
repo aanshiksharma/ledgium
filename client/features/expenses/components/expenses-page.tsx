@@ -17,15 +17,12 @@ import { ProgressBar } from "@/components/common/progress-bar"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 
-import {
-  useHouseholdExpenses,
-  HouseholdExpenseList,
-} from "@/features/household-expenses"
+import { useExpenses, ExpenseList } from "@/features/expenses"
 import { useHousehold, NoCurrentHousehold } from "@/features/households"
-import { HouseholdExpenseFormButton } from "./household-expense-form-button"
+import { ExpenseFormButton } from "./expense-form-button"
 import { ButtonGroup } from "@/components/ui/button-group"
 
-export function HouseholdExpensesPage() {
+export function ExpensesPage() {
   const {
     currentHousehold,
     households,
@@ -50,8 +47,7 @@ export function HouseholdExpensesPage() {
     [from, to, offset]
   )
 
-  const { total, isLoading, isSubmitting, error, refresh } =
-    useHouseholdExpenses(currentHousehold?.id ?? null, filters)
+  const { total, isLoading, isSubmitting, error, refresh } = useExpenses()
 
   if (householdLoading)
     return (
@@ -100,7 +96,7 @@ export function HouseholdExpensesPage() {
             </Button>
           </ButtonGroup>
 
-          <HouseholdExpenseFormButton
+          <ExpenseFormButton
             isSubmitting={isSubmitting}
             currentHousehold={currentHousehold}
           >
@@ -111,7 +107,7 @@ export function HouseholdExpensesPage() {
             ) : (
               <Button>Add Expense</Button>
             )}
-          </HouseholdExpenseFormButton>
+          </ExpenseFormButton>
         </div>
       </section>
 
@@ -124,10 +120,7 @@ export function HouseholdExpensesPage() {
         </div>
       )}
 
-      <HouseholdExpenseList
-        viewMode={viewMode}
-        currentHousehold={currentHousehold}
-      />
+      <ExpenseList viewMode={viewMode} currentHousehold={currentHousehold} />
 
       {
         <div className="flex items-center justify-between">

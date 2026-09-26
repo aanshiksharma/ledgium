@@ -3,7 +3,7 @@ import { Controller, useFormContext } from "react-hook-form"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Field, FieldError, FieldLabel } from "@/components/ui/field"
 
-import type { HouseholdExpenseFormValues } from "../../types/household-expense-form.types"
+import type { ExpenseFormValues } from "../../types/expense-form.types"
 import { type HouseholdMember, useMembers } from "@/features/members"
 
 type Props = {
@@ -15,7 +15,7 @@ function memberLabel(member: HouseholdMember): string {
 }
 
 export function ExpenseParticipantsField({ disabled }: Props) {
-  const { control, formState } = useFormContext<HouseholdExpenseFormValues>()
+  const { control, formState } = useFormContext<ExpenseFormValues>()
   const error = formState.errors.participantIds
 
   const { members } = useMembers()

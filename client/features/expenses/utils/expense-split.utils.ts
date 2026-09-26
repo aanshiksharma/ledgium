@@ -1,4 +1,4 @@
-import type { HouseholdExpense, SplitMode } from "@/features/household-expenses"
+import type { Expense, SplitMode } from "@/features/expenses"
 
 export function localDateValue(): string {
   const now = new Date()
@@ -43,7 +43,7 @@ export function sumCents(
   return memberIds.reduce((sum, id) => sum + toCents(values[id] ?? "0"), 0)
 }
 
-export function getSplitMode(expense: HouseholdExpense): SplitMode {
+export function getSplitMode(expense: Expense): SplitMode {
   const splits = expense.participants.map(
     (participant) => participant.shareAmount
   )

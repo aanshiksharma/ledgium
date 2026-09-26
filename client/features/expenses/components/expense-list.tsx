@@ -1,31 +1,24 @@
 import { Household } from "@/features/households"
-import { useHouseholdExpenses } from "@/features/household-expenses"
+import { ExpenseDebt, useExpenses } from "@/features/expenses"
 
-import {
-  HouseholdExpenseListRow,
-  HouseholdExpenseListRowSkeleton,
-} from "./household-expense-list-row"
+import { ExpenseListRow, ExpenseListRowSkeleton } from "./expense-list-row"
 import { Table, TableBody } from "@/components/ui/table"
 
-export function HouseholdExpenseList({
+export function ExpenseList({
   viewMode,
   currentHousehold,
 }: {
   viewMode: "grid" | "list"
   currentHousehold: Household
 }) {
-  const {
-    expenses,
-    isLoading: expensesLoading,
-    isSubmitting,
-  } = useHouseholdExpenses(currentHousehold.id)
+  const { expenses, isLoading: expensesLoading, isSubmitting } = useExpenses()
 
   if (expensesLoading) {
     return (
       <Table>
         <TableBody>
           {Array.from(new Array(15)).map((_, index) => (
-            <HouseholdExpenseListRowSkeleton key={index} />
+            <ExpenseListRowSkeleton key={index} />
           ))}
         </TableBody>
       </Table>
@@ -48,17 +41,11 @@ export function HouseholdExpenseList({
         <TableBody>
           {expenses.map((expense) => {
             const hasSettlements = expense.debts.some(
-              (debt) => (debt._count?.settlementAllocations ?? 0) > 0
+              (debt: ExpenseDebt) =>
+                (debt._count?.settlementAllocations ?? 0) > 0
             )
 
-            return (
-              <HouseholdExpenseListRow
-                key={expense.id}
-                currentHousehold={currentHousehold}
-                expense={expense}
-                isSubmitting={isSubmitting}
-              />
-            )
+            return <ExpenseListRow key={expense.id} expense={expense} />
           })}
         </TableBody>
       </Table>

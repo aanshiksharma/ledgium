@@ -12,9 +12,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Input } from "@/components/ui/input"
 
 import type {
-  HouseholdExpenseFormValues,
+  ExpenseFormValues,
   SplitMode,
-} from "../../types/household-expense-form.types"
+} from "../../types/expense-form.types"
 import { formatAmount, sumCents } from "../../utils/expense-split.utils"
 import { HouseholdMember, useMembers } from "@/features/members"
 
@@ -41,7 +41,7 @@ export function ExpenseSplitSection({
   splitMode,
   disabled,
 }: Props) {
-  const { control, formState } = useFormContext<HouseholdExpenseFormValues>()
+  const { control, formState } = useFormContext<ExpenseFormValues>()
   const { members } = useMembers()
 
   const { field: amountsField } = useController({

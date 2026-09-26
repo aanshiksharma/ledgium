@@ -12,10 +12,10 @@ import {
 import { Table, TableBody } from "@/components/ui/table"
 
 import {
-  useHouseholdExpenses,
-  HouseholdExpenseListRow,
-  HouseholdExpenseListRowSkeleton,
-} from "@/features/household-expenses"
+  useExpenses,
+  ExpenseListRow,
+  ExpenseListRowSkeleton,
+} from "@/features/expenses"
 import { Household } from "@/features/households"
 
 type Props = {
@@ -27,7 +27,7 @@ export function RecentExpenses({ currentHousehold }: Props) {
     isLoading: expensesLoading,
     isSubmitting: expenseSubmitting,
     expenses,
-  } = useHouseholdExpenses(currentHousehold.id)
+  } = useExpenses()
 
   return (
     <section className="flex flex-col gap-4 lg:gap-6">
@@ -44,7 +44,7 @@ export function RecentExpenses({ currentHousehold }: Props) {
           <Table>
             <TableBody>
               {Array.from(new Array(10)).map((_, index) => (
-                <HouseholdExpenseListRowSkeleton key={index} />
+                <ExpenseListRowSkeleton key={index} />
               ))}
             </TableBody>
           </Table>
@@ -67,9 +67,7 @@ export function RecentExpenses({ currentHousehold }: Props) {
               {expenses
                 .filter((_, index) => index < 10)
                 .map((expense) => (
-                  <HouseholdExpenseListRow
-                    currentHousehold={currentHousehold}
-                    isSubmitting={expenseSubmitting}
+                  <ExpenseListRow
                     key={expense.id}
                     expense={expense}
                     hideDelete

@@ -1,11 +1,8 @@
-import type {
-  HouseholdExpense,
-  HouseholdExpenseInput,
-} from "@/features/household-expenses"
+import type { Expense } from "@/features/expenses"
 
 export type SplitMode = "equal" | "custom"
 
-export type HouseholdExpenseFormValues = {
+export type ExpenseFormValues = {
   description: string
   categoryId: string
   totalAmount: string
@@ -16,9 +13,9 @@ export type HouseholdExpenseFormValues = {
   payerId: string
 }
 
-export type HouseholdExpenseFormProps = {
+export type ExpenseFormProps = {
   householdId: string
   currency: string
-  expense?: HouseholdExpense | null
+  expense?: Expense | null
   onSuccess?: () => void
 }

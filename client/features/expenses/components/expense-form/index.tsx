@@ -9,13 +9,13 @@ import { ExpenseDetailsFields } from "./expense-details-fields"
 import { ExpenseParticipantsField } from "./expense-participants-field"
 import { ExpensePayerField } from "./expense-payer-field"
 import { ExpenseSplitSection } from "./expense-split-section"
-import { useHouseholdExpenseForm } from "@/features/household-expenses"
-import type { HouseholdExpenseFormProps } from "../../types/household-expense-form.types"
+import { useExpenseForm } from "@/features/expenses"
+import type { ExpenseFormProps } from "../../types/expense-form.types"
+import { useHousehold } from "@/features/households"
 
-export function HouseholdExpenseForm(props: HouseholdExpenseFormProps) {
+export function ExpenseForm(props: ExpenseFormProps) {
   const {
     form,
-    members,
     values,
     totalCents,
     differenceCents,
@@ -23,7 +23,9 @@ export function HouseholdExpenseForm(props: HouseholdExpenseFormProps) {
     financialFieldsLocked,
     hasRecordedSettlements,
     submit,
-  } = useHouseholdExpenseForm(props)
+  } = useExpenseForm(props)
+
+  const { currentHousehold } = useHousehold()
 
   return (
     <FormProvider {...form}>

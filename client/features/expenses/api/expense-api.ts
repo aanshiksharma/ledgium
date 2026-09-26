@@ -1,20 +1,20 @@
 import { apiRequest } from "@/lib/api/client"
 
 import type {
-  CreateHouseholdExpenseInput,
-  HouseholdExpenseFilters,
-  HouseholdExpenseListResponse,
-  HouseholdExpenseResponse,
-  UpdateHouseholdExpenseInput,
-} from "../types/household-expense.types"
+  CreateExpenseInput,
+  ExpenseFilters,
+  ExpenseListResponse,
+  ExpenseResponse,
+  UpdateExpenseInput,
+} from "../types/expense.types"
 
 function basePath(householdId: string) {
   return `/households/${householdId}/expenses`
 }
 
-export async function getHouseholdExpenses(
+export async function getExpenses(
   householdId: string,
-  filters: HouseholdExpenseFilters = {}
+  filters: ExpenseFilters = {}
 ) {
   const params = new URLSearchParams()
 
@@ -25,41 +25,35 @@ export async function getHouseholdExpenses(
 
   const query = params.toString()
 
-  return apiRequest<HouseholdExpenseListResponse>(
+  return apiRequest<ExpenseListResponse>(
     `${basePath(householdId)}${query ? `?${query}` : ""}`
   )
 }
 
-export async function getHouseholdExpense(
-  householdId: string,
-  expenseId: string
-) {
-  const response = await apiRequest<HouseholdExpenseResponse>(
+export async function getExpense(householdId: string, expenseId: string) {
+  const response = await apiRequest<ExpenseResponse>(
     `${basePath(householdId)}/${expenseId}`
   )
   return response.expense
 }
 
-export async function createHouseholdExpense(
+export async function createExpense(
   householdId: string,
-  input: CreateHouseholdExpenseInput
+  input: CreateExpenseInput
 ) {
-  const response = await apiRequest<HouseholdExpenseResponse>(
-    basePath(householdId),
-    {
-      method: "POST",
-      body: JSON.stringify(input),
-    }
-  )
+  const response = await apiRequest<ExpenseResponse>(basePath(householdId), {
+    method: "POST",
+    body: JSON.stringify(input),
+  })
   return response.expense
 }
 
-export async function updateHouseholdExpense(
+export async function updateExpense(
   householdId: string,
   expenseId: string,
-  input: UpdateHouseholdExpenseInput
+  input: UpdateExpenseInput
 ) {
-  const response = await apiRequest<HouseholdExpenseResponse>(
+  const response = await apiRequest<ExpenseResponse>(
     `${basePath(householdId)}/${expenseId}`,
     {
       method: "PATCH",

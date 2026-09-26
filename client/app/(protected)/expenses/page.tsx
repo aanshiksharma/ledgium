@@ -1,5 +1,5 @@
-import { HouseholdExpensesPage } from "@/features/household-expenses"
+import { ExpensesPage } from "@/features/expenses"
 
 export default function Page() {
-  return <HouseholdExpensesPage />
+  return <ExpensesPage />
 }

@@ -26,20 +26,17 @@ import { Button } from "@/components/ui/button"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 
-import {
-  HouseholdExpenseForm,
-  type HouseholdExpense,
-} from "@/features/household-expenses"
+import { ExpenseForm, type Expense } from "@/features/expenses"
 import { type Household } from "@/features/households"
 
 type Props = {
   children: ReactNode
   currentHousehold: Household
-  expense?: HouseholdExpense
+  expense?: Expense
   isSubmitting: boolean
 }
 
-export function HouseholdExpenseFormButton({
+export function ExpenseFormButton({
   children,
   currentHousehold,
   expense,
@@ -59,7 +56,7 @@ export function HouseholdExpenseFormButton({
           </DrawerHeader>
 
           <div className="no-scrollbar max-h-[70vh] overflow-y-auto p-4">
-            <HouseholdExpenseForm
+            <ExpenseForm
               key={expense?.id ?? "new"}
               householdId={currentHousehold.id}
               currency={currentHousehold.currency}
@@ -104,7 +101,7 @@ export function HouseholdExpenseFormButton({
           </DialogHeader>
 
           <div className="no-scrollbar max-h-[70vh] overflow-y-auto p-1">
-            <HouseholdExpenseForm
+            <ExpenseForm
               key={expense?.id ?? "new"}
               householdId={currentHousehold.id}
               currency={currentHousehold.currency}

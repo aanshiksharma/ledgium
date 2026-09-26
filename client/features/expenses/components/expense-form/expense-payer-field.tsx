@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Field, FieldError } from "@/components/ui/field"
 import { Button } from "@/components/ui/button"
 
-import type { HouseholdExpenseFormValues } from "../../types/household-expense-form.types"
+import type { ExpenseFormValues } from "../../types/expense-form.types"
 
 import { type HouseholdMember, useMembers } from "@/features/members"
 
@@ -39,7 +39,7 @@ function memberAvatar(member: HouseholdMember): ReactNode {
 
 export function ExpensePayerField({ disabled }: Props) {
   const [showPayerSelector, setShowPayerSelector] = useState(false)
-  const { getValues, control } = useFormContext<HouseholdExpenseFormValues>()
+  const { getValues, control } = useFormContext<ExpenseFormValues>()
 
   const { members } = useMembers()
 

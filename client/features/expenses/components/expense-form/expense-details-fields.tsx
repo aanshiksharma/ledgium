@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-import type { HouseholdExpenseFormValues } from "../../types/household-expense-form.types"
+import type { ExpenseFormValues } from "../../types/expense-form.types"
 import { useCategories } from "@/features/categories"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -33,7 +33,7 @@ export function ExpenseDetailsFields({
   currency,
   disabled,
 }: Props) {
-  const { control } = useFormContext<HouseholdExpenseFormValues>()
+  const { control } = useFormContext<ExpenseFormValues>()
   const { isLoading, categories } = useCategories(householdId)
 
   return (

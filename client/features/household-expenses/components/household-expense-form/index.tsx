@@ -43,13 +43,9 @@ export function HouseholdExpenseForm(props: HouseholdExpenseFormProps) {
           disabled={financialFieldsLocked}
         />
 
-        <ExpenseParticipantsField
-          members={members}
-          disabled={financialFieldsLocked}
-        />
+        <ExpenseParticipantsField disabled={financialFieldsLocked} />
 
         <ExpenseSplitSection
-          members={members}
           participantIds={values.participantIds}
           totalCents={totalCents}
           differenceCents={differenceCents}
@@ -59,7 +55,7 @@ export function HouseholdExpenseForm(props: HouseholdExpenseFormProps) {
           disabled={financialFieldsLocked}
         />
 
-        <ExpensePayerField members={members} disabled={financialFieldsLocked} />
+        <ExpensePayerField disabled={financialFieldsLocked} />
 
         <ExpenseDateField disabled={financialFieldsLocked} />
 

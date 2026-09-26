@@ -3,7 +3,7 @@ import { Geist_Mono, Inter, Manrope } from "next/font/google"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
-import { AuthProvider, HouseholdProvider } from "@/providers"
+import { AuthProvider, HouseholdProvider, MembersProvider } from "@/providers"
 import { cn } from "@/lib/utils"
 
 const manropeHeading = Manrope({
@@ -43,7 +43,9 @@ export default function RootLayout({
       <body>
         <AuthProvider>
           <HouseholdProvider>
-            <ThemeProvider>{children}</ThemeProvider>
+            <MembersProvider>
+              <ThemeProvider>{children}</ThemeProvider>
+            </MembersProvider>
           </HouseholdProvider>
         </AuthProvider>
       </body>

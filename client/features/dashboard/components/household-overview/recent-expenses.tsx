@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/empty"
 import { Table, TableBody } from "@/components/ui/table"
 
-import { useMembers } from "@/features/members"
 import {
   useHouseholdExpenses,
   HouseholdExpenseListRow,
@@ -24,7 +23,6 @@ type Props = {
 }
 
 export function RecentExpenses({ currentHousehold }: Props) {
-  const { isLoading: membersLoading, members } = useMembers(currentHousehold.id)
   const {
     isLoading: expensesLoading,
     isSubmitting: expenseSubmitting,
@@ -42,7 +40,7 @@ export function RecentExpenses({ currentHousehold }: Props) {
       </header>
 
       <section className="overflow-hidden rounded-xl bg-muted/25">
-        {membersLoading || expensesLoading || !members || !expenses ? (
+        {expensesLoading ? (
           <Table>
             <TableBody>
               {Array.from(new Array(10)).map((_, index) => (
@@ -74,7 +72,6 @@ export function RecentExpenses({ currentHousehold }: Props) {
                     isSubmitting={expenseSubmitting}
                     key={expense.id}
                     expense={expense}
-                    members={members}
                     hideDelete
                   />
                 ))}

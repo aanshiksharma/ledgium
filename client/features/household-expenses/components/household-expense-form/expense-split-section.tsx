@@ -10,30 +10,15 @@ import {
 } from "@/components/ui/field"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 
 import type {
   HouseholdExpenseFormValues,
   SplitMode,
 } from "../../types/household-expense-form.types"
 import { formatAmount, sumCents } from "../../utils/expense-split.utils"
-
-type Member = {
-  userId: string
-  user?: {
-    name?: string | null
-    email?: string | null
-  } | null
-}
+import { HouseholdMember, useMembers } from "@/features/members"
 
 type Props = {
-  members: Member[]
   participantIds: string[]
   totalCents: number
   differenceCents: number
@@ -43,12 +28,11 @@ type Props = {
   disabled?: boolean
 }
 
-function memberLabel(member: Member): string {
+function memberLabel(member: HouseholdMember): string {
   return member.user?.name || member.user?.email || member.userId
 }
 
 export function ExpenseSplitSection({
-  members,
   participantIds,
   totalCents,
   differenceCents,
@@ -58,6 +42,7 @@ export function ExpenseSplitSection({
   disabled,
 }: Props) {
   const { control, formState } = useFormContext<HouseholdExpenseFormValues>()
+  const { members } = useMembers()
 
   const { field: amountsField } = useController({
     name: "customAmounts",

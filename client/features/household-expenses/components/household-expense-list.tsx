@@ -5,7 +5,6 @@ import {
   HouseholdExpenseListRow,
   HouseholdExpenseListRowSkeleton,
 } from "./household-expense-list-row"
-import { useMembers } from "@/features/members"
 import { Table, TableBody } from "@/components/ui/table"
 
 export function HouseholdExpenseList({
@@ -20,9 +19,8 @@ export function HouseholdExpenseList({
     isLoading: expensesLoading,
     isSubmitting,
   } = useHouseholdExpenses(currentHousehold.id)
-  const { members, isLoading: membersLoading } = useMembers(currentHousehold.id)
 
-  if (expensesLoading || membersLoading) {
+  if (expensesLoading) {
     return (
       <Table>
         <TableBody>
@@ -58,7 +56,6 @@ export function HouseholdExpenseList({
                 key={expense.id}
                 currentHousehold={currentHousehold}
                 expense={expense}
-                members={members}
                 isSubmitting={isSubmitting}
               />
             )

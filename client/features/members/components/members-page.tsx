@@ -21,7 +21,6 @@ export function MembersPage() {
   } = useHousehold()
 
   const {
-    members,
     isLoading,
     isMutating,
     error,
@@ -29,7 +28,7 @@ export function MembersPage() {
     addMember,
     updateMemberRole,
     removeMember,
-  } = useMembers(currentHousehold?.id ?? null)
+  } = useMembers()
 
   const [showAddForm, setShowAddForm] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
@@ -38,7 +37,9 @@ export function MembersPage() {
     return (
       <section className="mx-auto w-full max-w-6xl">
         <h1 className="text-2xl font-bold">Members</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Loading household...</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Loading household...
+        </p>
       </section>
     )
   }
@@ -58,13 +59,17 @@ export function MembersPage() {
     return (
       <section className="mx-auto w-full max-w-6xl">
         <h1 className="text-2xl font-bold">Members</h1>
-        <p className="mt-2 text-sm text-muted-foreground">No household is currently selected.</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          No household is currently selected.
+        </p>
       </section>
     )
   }
 
-  const currentUserRole: HouseholdRole = currentHousehold.members[0]?.role ?? "MEMBER"
-  const canAddMembers = currentUserRole === "OWNER" || currentUserRole === "ADMIN"
+  const currentUserRole: HouseholdRole =
+    currentHousehold.members[0]?.role ?? "MEMBER"
+  const canAddMembers =
+    currentUserRole === "OWNER" || currentUserRole === "ADMIN"
   const canAddAdmin = currentUserRole === "OWNER"
   const canChangeRoles = currentUserRole === "OWNER"
 
@@ -81,7 +86,9 @@ export function MembersPage() {
       setShowAddForm(false)
     } catch (requestError) {
       setActionError(
-        requestError instanceof Error ? requestError.message : "Failed to add member."
+        requestError instanceof Error
+          ? requestError.message
+          : "Failed to add member."
       )
     }
   }
@@ -95,7 +102,9 @@ export function MembersPage() {
       await updateMemberRole(userId, input)
     } catch (requestError) {
       setActionError(
-        requestError instanceof Error ? requestError.message : "Failed to change member role."
+        requestError instanceof Error
+          ? requestError.message
+          : "Failed to change member role."
       )
       throw requestError
     }
@@ -107,7 +116,9 @@ export function MembersPage() {
       await removeMember(userId)
     } catch (requestError) {
       setActionError(
-        requestError instanceof Error ? requestError.message : "Failed to remove member."
+        requestError instanceof Error
+          ? requestError.message
+          : "Failed to remove member."
       )
       throw requestError
     }
@@ -163,19 +174,14 @@ export function MembersPage() {
         </div>
       ) : null}
 
-      {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading members...</p>
-      ) : (
-        <MemberList
-          members={members}
-          currentUserId={user?.id ?? null}
-          canChangeRoles={canChangeRoles}
-          canRemoveMember={canRemoveMember}
-          isMutating={isMutating}
-          onUpdateRole={handleUpdateRole}
-          onRemove={handleRemove}
-        />
-      )}
+      <MemberList
+        currentUserId={user?.id ?? null}
+        canChangeRoles={canChangeRoles}
+        canRemoveMember={canRemoveMember}
+        isMutating={isMutating}
+        onUpdateRole={handleUpdateRole}
+        onRemove={handleRemove}
+      />
     </section>
   )
 }

@@ -4,27 +4,21 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Field, FieldError, FieldLabel } from "@/components/ui/field"
 
 import type { HouseholdExpenseFormValues } from "../../types/household-expense-form.types"
-
-type Member = {
-  userId: string
-  user?: {
-    name?: string | null
-    email?: string | null
-  } | null
-}
+import { type HouseholdMember, useMembers } from "@/features/members"
 
 type Props = {
-  members: Member[]
   disabled?: boolean
 }
 
-function memberLabel(member: Member): string {
+function memberLabel(member: HouseholdMember): string {
   return member.user?.name || member.user?.email || member.userId
 }
 
-export function ExpenseParticipantsField({ members, disabled }: Props) {
+export function ExpenseParticipantsField({ disabled }: Props) {
   const { control, formState } = useFormContext<HouseholdExpenseFormValues>()
   const error = formState.errors.participantIds
+
+  const { members } = useMembers()
 
   return (
     <Controller

@@ -14,13 +14,14 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 
-import { Household, HouseholdMember } from "@/features/households"
+import { Household } from "@/features/households"
+import { useMembers } from "@/features/members"
+
 import { HouseholdExpense } from "../types/household-expense.types"
 import { HouseholdExpenseFormButton } from "./household-expense-form-button"
 
 type Props = {
   expense: HouseholdExpense
-  members: HouseholdMember[]
   isSubmitting: boolean
   currentHousehold: Household
   hideDelete?: boolean
@@ -28,7 +29,6 @@ type Props = {
 
 export function HouseholdExpenseListRow({
   expense,
-  members,
   currentHousehold,
   isSubmitting,
   hideDelete = false,
@@ -40,6 +40,8 @@ export function HouseholdExpenseListRow({
   const SafeIcon =
     (Icons as unknown as Record<string, LucideIcon>)[iconName] ||
     Icons.ShoppingBasket
+
+  const { members } = useMembers()
 
   return (
     <TableRow>

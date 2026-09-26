@@ -63,7 +63,7 @@ export function useHouseholdExpenseForm({
   onSuccess,
 }: HouseholdExpenseFormProps) {
   const { user } = useAuth()
-  const { members } = useMembers(householdId)
+  const { members } = useMembers()
   const initializedExpenseIdRef = useRef<string | null>(null)
 
   const { update, create, refresh } = useHouseholdExpenses(householdId)

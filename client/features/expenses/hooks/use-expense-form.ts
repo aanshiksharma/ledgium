@@ -7,12 +7,12 @@ import { useAuth } from "@/features/auth"
 import { useMembers } from "@/features/members"
 
 import {
-  useHouseholdExpenses,
-  type HouseholdExpense,
-  type HouseholdExpenseInput,
-  type HouseholdExpenseFormProps,
-  type HouseholdExpenseFormValues,
-} from "@/features/household-expenses"
+  useExpenses,
+  type Expense,
+  type ExpenseInput,
+  type ExpenseFormProps,
+  type ExpenseFormValues,
+} from "@/features/expenses"
 import {
   dateValue,
   distributeEqually,
@@ -22,7 +22,7 @@ import {
   getSplitMode,
 } from "../utils/expense-split.utils"
 
-function createDefaultFormValues(userId: string): HouseholdExpenseFormValues {
+function createDefaultFormValues(userId: string): ExpenseFormValues {
   return {
     description: "",
     categoryId: "",
@@ -35,9 +35,7 @@ function createDefaultFormValues(userId: string): HouseholdExpenseFormValues {
   }
 }
 
-function createEditFormValues(
-  expense: HouseholdExpense
-): HouseholdExpenseFormValues {
+function createEditFormValues(expense: Expense): ExpenseFormValues {
   return {
     description: expense.description,
     categoryId: expense.categoryId ?? "",
@@ -57,18 +55,18 @@ function createEditFormValues(
   }
 }
 
-export function useHouseholdExpenseForm({
+export function useExpenseForm({
   householdId,
   expense,
   onSuccess,
-}: HouseholdExpenseFormProps) {
+}: ExpenseFormProps) {
   const { user } = useAuth()
-  const { members } = useMembers(householdId)
+  const { members } = useMembers()
   const initializedExpenseIdRef = useRef<string | null>(null)
 
-  const { update, create, refresh } = useHouseholdExpenses(householdId)
+  const { update, create, refresh } = useExpenses()
 
-  const form = useForm<HouseholdExpenseFormValues>({
+  const form = useForm<ExpenseFormValues>({
     defaultValues: createDefaultFormValues(user?.id ?? ""),
   })
 
@@ -206,7 +204,7 @@ export function useHouseholdExpenseForm({
       return
     }
 
-    const input: HouseholdExpenseInput = {
+    const input: ExpenseInput = {
       description,
       categoryId: formValues.categoryId,
       totalAmount: amountCents / 100,

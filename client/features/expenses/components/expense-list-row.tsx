@@ -14,25 +14,20 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 
-import { Household, HouseholdMember } from "@/features/households"
-import { HouseholdExpense } from "../types/household-expense.types"
-import { HouseholdExpenseFormButton } from "./household-expense-form-button"
+import { useMembers } from "@/features/members"
+import { useHousehold } from "@/features/households"
+import {
+  type Expense,
+  ExpenseFormButton,
+  useExpenses,
+} from "@/features/expenses"
 
 type Props = {
-  expense: HouseholdExpense
-  members: HouseholdMember[]
-  isSubmitting: boolean
-  currentHousehold: Household
+  expense: Expense
   hideDelete?: boolean
 }
 
-export function HouseholdExpenseListRow({
-  expense,
-  members,
-  currentHousehold,
-  isSubmitting,
-  hideDelete = false,
-}: Props) {
+export function ExpenseListRow({ expense, hideDelete = false }: Props) {
   const iconName = convertToPascalCase(
     expense.category?.icon ? expense.category.icon : ""
   )
@@ -40,6 +35,10 @@ export function HouseholdExpenseListRow({
   const SafeIcon =
     (Icons as unknown as Record<string, LucideIcon>)[iconName] ||
     Icons.ShoppingBasket
+
+  const { members } = useMembers()
+  const { currentHousehold } = useHousehold()
+  const { isSubmitting } = useExpenses()
 
   return (
     <TableRow>
@@ -126,15 +125,15 @@ export function HouseholdExpenseListRow({
       </TableCell>
 
       <TableCell>
-        <HouseholdExpenseFormButton
-          currentHousehold={currentHousehold}
+        <ExpenseFormButton
+          currentHousehold={currentHousehold!}
           isSubmitting={isSubmitting}
           expense={expense}
         >
           <Button variant="ghost" size="icon">
             <Icons.Edit />
           </Button>
-        </HouseholdExpenseFormButton>
+        </ExpenseFormButton>
 
         <Button
           variant="ghost"
@@ -152,7 +151,7 @@ export function HouseholdExpenseListRow({
   )
 }
 
-export function HouseholdExpenseListRowSkeleton() {
+export function ExpenseListRowSkeleton() {
   return (
     <TableRow>
       <TableCell className="w-full">

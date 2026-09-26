@@ -41,7 +41,7 @@ export type ExpenseDebt = {
   }
 }
 
-export type HouseholdExpense = {
+export type Expense = {
   id: string
   householdId: string
   categoryId: string | null
@@ -60,7 +60,7 @@ export type HouseholdExpense = {
   debts: ExpenseDebt[]
 }
 
-export type HouseholdExpenseInput = {
+export type ExpenseInput = {
   description: string
   categoryId: string
   totalAmount: number
@@ -73,21 +73,21 @@ export type HouseholdExpenseInput = {
   }[]
 }
 
-export type CreateHouseholdExpenseInput = HouseholdExpenseInput
-export type UpdateHouseholdExpenseInput = HouseholdExpenseInput
+export type CreateExpenseInput = ExpenseInput
+export type UpdateExpenseInput = ExpenseInput
 
-export type HouseholdExpenseFilters = {
+export type ExpenseFilters = {
   from?: string
   to?: string
   limit?: number
   offset?: number
 }
 
-export type HouseholdExpenseListResponse = {
-  expenses: HouseholdExpense[]
+export type ExpenseListResponse = {
+  expenses: Expense[]
   total: number
 }
 
-export type HouseholdExpenseResponse = {
-  expense: HouseholdExpense
+export type ExpenseResponse = {
+  expense: Expense
 }

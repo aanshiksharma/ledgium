@@ -11,12 +11,11 @@ import {
 } from "@/components/ui/empty"
 import { Table, TableBody } from "@/components/ui/table"
 
-import { useMembers } from "@/features/members"
 import {
-  useHouseholdExpenses,
-  HouseholdExpenseListRow,
-  HouseholdExpenseListRowSkeleton,
-} from "@/features/household-expenses"
+  useExpenses,
+  ExpenseListRow,
+  ExpenseListRowSkeleton,
+} from "@/features/expenses"
 import { Household } from "@/features/households"
 
 type Props = {
@@ -24,12 +23,11 @@ type Props = {
 }
 
 export function RecentExpenses({ currentHousehold }: Props) {
-  const { isLoading: membersLoading, members } = useMembers(currentHousehold.id)
   const {
     isLoading: expensesLoading,
     isSubmitting: expenseSubmitting,
     expenses,
-  } = useHouseholdExpenses(currentHousehold.id)
+  } = useExpenses()
 
   return (
     <section className="flex flex-col gap-4 lg:gap-6">
@@ -42,11 +40,11 @@ export function RecentExpenses({ currentHousehold }: Props) {
       </header>
 
       <section className="overflow-hidden rounded-xl bg-muted/25">
-        {membersLoading || expensesLoading || !members || !expenses ? (
+        {expensesLoading ? (
           <Table>
             <TableBody>
               {Array.from(new Array(10)).map((_, index) => (
-                <HouseholdExpenseListRowSkeleton key={index} />
+                <ExpenseListRowSkeleton key={index} />
               ))}
             </TableBody>
           </Table>
@@ -69,12 +67,9 @@ export function RecentExpenses({ currentHousehold }: Props) {
               {expenses
                 .filter((_, index) => index < 10)
                 .map((expense) => (
-                  <HouseholdExpenseListRow
-                    currentHousehold={currentHousehold}
-                    isSubmitting={expenseSubmitting}
+                  <ExpenseListRow
                     key={expense.id}
                     expense={expense}
-                    members={members}
                     hideDelete
                   />
                 ))}

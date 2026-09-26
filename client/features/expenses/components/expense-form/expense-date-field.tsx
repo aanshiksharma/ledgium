@@ -3,14 +3,14 @@ import { Controller, useFormContext } from "react-hook-form"
 import { Field, FieldError, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 
-import type { HouseholdExpenseFormValues } from "../../types/household-expense-form.types"
+import type { ExpenseFormValues } from "../../types/expense-form.types"
 
 type Props = {
   disabled?: boolean
 }
 
 export function ExpenseDateField({ disabled }: Props) {
-  const { control } = useFormContext<HouseholdExpenseFormValues>()
+  const { control } = useFormContext<ExpenseFormValues>()
 
   return (
     <Controller

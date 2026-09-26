@@ -1,17 +1,6 @@
 import { ReactNode, useState } from "react"
 import { Controller, useFormContext } from "react-hook-form"
 
-import { Button } from "@/components/ui/button"
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-  FieldLegend,
-  FieldSet,
-} from "@/components/ui/field"
-
-import type { HouseholdExpenseFormValues } from "../../types/household-expense-form.types"
 import {
   Select,
   SelectContent,
@@ -19,12 +8,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-
-import type { HouseholdMember } from "@/features/households"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Field, FieldError } from "@/components/ui/field"
+import { Button } from "@/components/ui/button"
+
+import type { ExpenseFormValues } from "../../types/expense-form.types"
+
+import { type HouseholdMember, useMembers } from "@/features/members"
 
 type Props = {
-  members: HouseholdMember[]
   disabled?: boolean
 }
 
@@ -45,9 +37,11 @@ function memberAvatar(member: HouseholdMember): ReactNode {
   )
 }
 
-export function ExpensePayerField({ members, disabled }: Props) {
+export function ExpensePayerField({ disabled }: Props) {
   const [showPayerSelector, setShowPayerSelector] = useState(false)
-  const { getValues, control } = useFormContext<HouseholdExpenseFormValues>()
+  const { getValues, control } = useFormContext<ExpenseFormValues>()
+
+  const { members } = useMembers()
 
   const payerId = getValues("payerId")
   const payer = members.find((member) => member.userId === payerId)

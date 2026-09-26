@@ -16,7 +16,9 @@ export function AppShell({ children }: AppShellProps) {
       <SidebarInset>
         <AppHeader />
 
-        <main className="h-full p-4 md:p-6">{children}</main>
+        <main className="flex h-full flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+          {children}
+        </main>
       </SidebarInset>
     </SidebarProvider>
   )

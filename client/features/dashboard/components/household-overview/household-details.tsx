@@ -23,7 +23,7 @@ type Props = {
 
 export function HouseholdDetails({ currentHouseholdId }: Props) {
   const { isLoading: householdLoading, currentHousehold } = useHousehold()
-  const { isLoading: membersLoading, members } = useMembers(currentHouseholdId)
+  const { isLoading: membersLoading, members } = useMembers()
 
   return (
     <Card>

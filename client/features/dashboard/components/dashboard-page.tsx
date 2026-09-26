@@ -85,7 +85,7 @@ export function DashboardPage() {
         </div>
 
         <TabsContent value="household">
-          <HouseholdOverview currentHouseholdId={currentHousehold.id} />
+          <HouseholdOverview currentHousehold={currentHousehold} />
         </TabsContent>
 
         <TabsContent value="personal">

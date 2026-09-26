@@ -30,7 +30,7 @@ export function ProgressBar({ loading, loadingText = "Loading" }: Props) {
   }, [loading])
 
   return (
-    <div className="flex w-2/5 flex-col items-center justify-center gap-3">
+    <div className="flex w-full max-w-80 flex-col items-center justify-center gap-3">
       <div className="flex w-full items-center justify-between text-sm">
         <p className="flex items-center gap-2">
           <Loader className="size-4 animate-spin" />

@@ -13,9 +13,7 @@ import { useCategories } from "@/features/categories"
 export function TransactionsPage() {
   const { currentHousehold, isLoading: isHouseholdLoading } = useHousehold()
   const { accounts } = useAccounts(currentHousehold?.id ?? null)
-  const { categories } = useCategories(
-    currentHousehold?.id ?? "currentHousehold.id"
-  )
+  const { categories } = useCategories()
 
   const [accountId, setAccountId] = useState("")
   const [categoryId, setCategoryId] = useState("")

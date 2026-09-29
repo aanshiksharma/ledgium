@@ -5,6 +5,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import {
   AuthProvider,
+  CategoriesProvider,
   ExpensesProvider,
   HouseholdProvider,
   MembersProvider,
@@ -49,9 +50,11 @@ export default function RootLayout({
         <AuthProvider>
           <HouseholdProvider>
             <MembersProvider>
-              <ExpensesProvider>
-                <ThemeProvider>{children}</ThemeProvider>
-              </ExpensesProvider>
+              <CategoriesProvider>
+                <ExpensesProvider>
+                  <ThemeProvider>{children}</ThemeProvider>
+                </ExpensesProvider>
+              </CategoriesProvider>
             </MembersProvider>
           </HouseholdProvider>
         </AuthProvider>

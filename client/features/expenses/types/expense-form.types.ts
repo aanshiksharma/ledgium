@@ -14,8 +14,6 @@ export type ExpenseFormValues = {
 }
 
 export type ExpenseFormProps = {
-  householdId: string
-  currency: string
   expense?: Expense | null
   onSuccess?: () => void
 }

@@ -1,16 +1,9 @@
-import { Household } from "@/features/households"
 import { ExpenseDebt, useExpenses } from "@/features/expenses"
 
 import { ExpenseListRow, ExpenseListRowSkeleton } from "./expense-list-row"
 import { Table, TableBody } from "@/components/ui/table"
 
-export function ExpenseList({
-  viewMode,
-  currentHousehold,
-}: {
-  viewMode: "grid" | "list"
-  currentHousehold: Household
-}) {
+export function ExpenseList({ viewMode }: { viewMode: "grid" | "list" }) {
   const { expenses, isLoading: expensesLoading, isSubmitting } = useExpenses()
 
   if (expensesLoading) {
@@ -36,7 +29,7 @@ export function ExpenseList({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl bg-muted/25">
+    <div className="grid overflow-hidden rounded-xl bg-muted/25">
       <Table>
         <TableBody>
           {expenses.map((expense) => {

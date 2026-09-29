@@ -26,24 +26,20 @@ import { Button } from "@/components/ui/button"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 
-import { ExpenseForm, type Expense } from "@/features/expenses"
-import { type Household } from "@/features/households"
+import { useExpenses, ExpenseForm, type Expense } from "@/features/expenses"
+import { useHousehold, type Household } from "@/features/households"
 
 type Props = {
   children: ReactNode
-  currentHousehold: Household
   expense?: Expense
-  isSubmitting: boolean
 }
 
-export function ExpenseFormButton({
-  children,
-  currentHousehold,
-  expense,
-  isSubmitting,
-}: Props) {
+export function ExpenseFormButton({ children, expense }: Props) {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const isMobile = useIsMobile()
+
+  const { currentHousehold } = useHousehold()
+  const { isSubmitting, isLoading } = useExpenses()
 
   if (isMobile)
     return (
@@ -58,8 +54,6 @@ export function ExpenseFormButton({
           <div className="no-scrollbar max-h-[70vh] overflow-y-auto p-4">
             <ExpenseForm
               key={expense?.id ?? "new"}
-              householdId={currentHousehold.id}
-              currency={currentHousehold.currency}
               expense={expense}
               onSuccess={() => setIsFormOpen(false)}
             />
@@ -69,11 +63,11 @@ export function ExpenseFormButton({
             <Button
               type="submit"
               form="household-expense-form"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isLoading}
             >
-              {isSubmitting ? (
+              {isSubmitting || isLoading ? (
                 <>
-                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  <Loader2 className="mr-1 size-4 animate-spin" />
                   {expense ? "Saving Changes" : "Adding Expense"}
                 </>
               ) : expense ? (
@@ -103,8 +97,6 @@ export function ExpenseFormButton({
           <div className="no-scrollbar max-h-[70vh] overflow-y-auto p-1">
             <ExpenseForm
               key={expense?.id ?? "new"}
-              householdId={currentHousehold.id}
-              currency={currentHousehold.currency}
               expense={expense}
               onSuccess={() => setIsFormOpen(false)}
             />
@@ -118,11 +110,11 @@ export function ExpenseFormButton({
             <Button
               type="submit"
               form="household-expense-form"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isLoading}
             >
-              {isSubmitting ? (
+              {isSubmitting || isLoading ? (
                 <>
-                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  <Loader2 className="mr-1 size-4 animate-spin" />
                   {expense ? "Saving Changes" : "Adding Expense"}
                 </>
               ) : expense ? (

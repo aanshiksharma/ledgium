@@ -38,7 +38,7 @@ export function ExpenseListRow({ expense, hideDelete = false }: Props) {
 
   const { members } = useMembers()
   const { currentHousehold } = useHousehold()
-  const { isSubmitting } = useExpenses()
+  const { isSubmitting, isLoading } = useExpenses()
 
   return (
     <TableRow>
@@ -47,7 +47,7 @@ export function ExpenseListRow({ expense, hideDelete = false }: Props) {
           <SafeIcon size={20} />
 
           <div className="flex flex-col gap-1">
-            <span>{expense.description}</span>
+            <span className="max-w-xs truncate">{expense.description}</span>
             <span className="text-xs text-muted-foreground">
               {convertToRelativeDate(new Date(expense.createdAt))}
             </span>
@@ -125,11 +125,7 @@ export function ExpenseListRow({ expense, hideDelete = false }: Props) {
       </TableCell>
 
       <TableCell>
-        <ExpenseFormButton
-          currentHousehold={currentHousehold!}
-          isSubmitting={isSubmitting}
-          expense={expense}
-        >
+        <ExpenseFormButton expense={expense}>
           <Button variant="ghost" size="icon">
             <Icons.Edit />
           </Button>

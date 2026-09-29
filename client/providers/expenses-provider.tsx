@@ -140,7 +140,7 @@ export function ExpensesProvider({ children }: { children: ReactNode }) {
       create,
       update,
     }),
-    [expenses, isLoading]
+    [expenses, isLoading, isSubmitting, total, error, refresh, create, update]
   )
 
   return (

@@ -11,12 +11,13 @@ import { useCategories } from "../hooks/use-categories"
 
 export function CategoriesPage() {
   const { currentHousehold, isLoading: isHouseholdLoading } = useHousehold()
-  const { categories, isLoading, error, refresh, create, remove } = useCategories(
-    currentHousehold?.id ?? null
-  )
+  const { categories, isLoading, error, refresh, create, remove } =
+    useCategories()
 
   const [isCreating, setIsCreating] = useState(false)
-  const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null)
+  const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(
+    null
+  )
   const [actionError, setActionError] = useState<string | null>(null)
 
   if (isHouseholdLoading) {

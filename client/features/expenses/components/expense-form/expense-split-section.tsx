@@ -17,13 +17,13 @@ import type {
 } from "../../types/expense-form.types"
 import { formatAmount, sumCents } from "../../utils/expense-split.utils"
 import { HouseholdMember, useMembers } from "@/features/members"
+import { useHousehold } from "@/features/households"
 
 type Props = {
   participantIds: string[]
   totalCents: number
   differenceCents: number
   balanced: boolean
-  currency: string
   splitMode: SplitMode
   disabled?: boolean
 }
@@ -37,12 +37,12 @@ export function ExpenseSplitSection({
   totalCents,
   differenceCents,
   balanced,
-  currency,
   splitMode,
   disabled,
 }: Props) {
   const { control, formState } = useFormContext<ExpenseFormValues>()
   const { members } = useMembers()
+  const { currentHousehold } = useHousehold()
 
   const { field: amountsField } = useController({
     name: "customAmounts",
@@ -118,7 +118,7 @@ export function ExpenseSplitSection({
 
               {splitMode === "equal" ? (
                 <span className="text-sm text-muted-foreground">
-                  {amount || "0.00"} {currency}
+                  {amount || "0.00"} {currentHousehold!.currency}
                 </span>
               ) : (
                 <Input
@@ -151,20 +151,21 @@ export function ExpenseSplitSection({
         <div className="flex justify-between">
           <span>Distributed</span>
           <span>
-            {formatAmount(distributedCents)} {currency}
+            {formatAmount(distributedCents)} {currentHousehold!.currency}
           </span>
         </div>
 
         <div className="flex justify-between">
           <span>Total</span>
           <span>
-            {formatAmount(totalCents)} {currency}
+            {formatAmount(totalCents)} {currentHousehold!.currency}
           </span>
         </div>
 
         {!balanced && (
           <p className="mt-2">
-            Difference: {formatAmount(Math.abs(differenceCents))} {currency}
+            Difference: {formatAmount(Math.abs(differenceCents))}{" "}
+            {currentHousehold!.currency}
           </p>
         )}
       </div>

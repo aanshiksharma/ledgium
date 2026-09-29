@@ -17,24 +17,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-
-import type { ExpenseFormValues } from "../../types/expense-form.types"
-import { useCategories } from "@/features/categories"
 import { Skeleton } from "@/components/ui/skeleton"
 
-type Props = {
-  householdId: string
-  currency: string
-  disabled?: boolean
-}
+import type { ExpenseFormValues } from "@/features/expenses"
+import { useCategories } from "@/features/categories"
+import { useHousehold } from "@/features/households"
 
-export function ExpenseDetailsFields({
-  householdId,
-  currency,
-  disabled,
-}: Props) {
+export function ExpenseDetailsFields({ disabled }: { disabled?: boolean }) {
+  const { currentHousehold } = useHousehold()
   const { control } = useFormContext<ExpenseFormValues>()
-  const { isLoading, categories } = useCategories(householdId)
+  const { isLoading, categories } = useCategories()
 
   return (
     <FieldGroup>
@@ -73,7 +65,9 @@ export function ExpenseDetailsFields({
 
               <Select
                 value={field.value}
-                onValueChange={field.onChange}
+                onValueChange={(value) => {
+                  if (value) field.onChange(value)
+                }}
                 disabled={disabled}
               >
                 <SelectTrigger aria-invalid={fieldState.invalid}>
@@ -100,7 +94,7 @@ export function ExpenseDetailsFields({
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
             <FieldLabel htmlFor="expense-total">
-              Total amount ({currency})
+              Total amount ({currentHousehold!.currency})
             </FieldLabel>
             <Input
               {...field}

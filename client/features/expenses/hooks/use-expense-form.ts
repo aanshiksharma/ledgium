@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef } from "react"
 import { useForm, useWatch } from "react-hook-form"
 
 import { useAuth } from "@/features/auth"
-import { useMembers } from "@/features/members"
+import { type HouseholdMember, useMembers } from "@/features/members"
 
 import {
   useExpenses,
@@ -22,13 +22,16 @@ import {
   getSplitMode,
 } from "../utils/expense-split.utils"
 
-function createDefaultFormValues(userId: string): ExpenseFormValues {
+function createDefaultFormValues(
+  userId: string,
+  members: HouseholdMember[]
+): ExpenseFormValues {
   return {
     description: "",
     categoryId: "",
     totalAmount: "",
     expenseDate: localDateValue(),
-    participantIds: [],
+    participantIds: members.map((member) => member.userId),
     splitMode: "equal",
     customAmounts: {},
     payerId: userId,
@@ -55,11 +58,7 @@ function createEditFormValues(expense: Expense): ExpenseFormValues {
   }
 }
 
-export function useExpenseForm({
-  householdId,
-  expense,
-  onSuccess,
-}: ExpenseFormProps) {
+export function useExpenseForm({ expense, onSuccess }: ExpenseFormProps) {
   const { user } = useAuth()
   const { members } = useMembers()
   const initializedExpenseIdRef = useRef<string | null>(null)
@@ -67,7 +66,7 @@ export function useExpenseForm({
   const { update, create, refresh } = useExpenses()
 
   const form = useForm<ExpenseFormValues>({
-    defaultValues: createDefaultFormValues(user?.id ?? ""),
+    defaultValues: createDefaultFormValues(user?.id ?? "", members),
   })
 
   const { control, reset, setValue, setError, clearErrors } = form
@@ -112,6 +111,7 @@ export function useExpenseForm({
 
   const financialFieldsLocked = Boolean(expense && hasRecordedSettlements)
 
+  // Resets the form with values of current expense
   useEffect(() => {
     const expenseId = expense?.id ?? null
 
@@ -122,10 +122,11 @@ export function useExpenseForm({
     reset(
       expense
         ? createEditFormValues(expense)
-        : createDefaultFormValues(user?.id ?? "")
+        : createDefaultFormValues(user?.id ?? "", members)
     )
-  }, [expense, reset])
+  }, [expense, members, reset])
 
+  // Controls changes in obligated amounts based on changes in the related fields
   useEffect(() => {
     if (
       financialFieldsLocked ||
@@ -238,7 +239,6 @@ export function useExpenseForm({
 
   return {
     form,
-    members,
     values: {
       totalAmount,
       splitMode,

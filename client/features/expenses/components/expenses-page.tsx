@@ -47,7 +47,7 @@ export function ExpensesPage() {
     [from, to, offset]
   )
 
-  const { total, isLoading, isSubmitting, error, refresh } = useExpenses()
+  const { total, isLoading, error, refresh } = useExpenses()
 
   if (householdLoading)
     return (
@@ -96,10 +96,7 @@ export function ExpensesPage() {
             </Button>
           </ButtonGroup>
 
-          <ExpenseFormButton
-            isSubmitting={isSubmitting}
-            currentHousehold={currentHousehold}
-          >
+          <ExpenseFormButton>
             {isMobile ? (
               <Button size="icon">
                 <ListPlus />
@@ -120,7 +117,7 @@ export function ExpensesPage() {
         </div>
       )}
 
-      <ExpenseList viewMode={viewMode} currentHousehold={currentHousehold} />
+      <ExpenseList viewMode={viewMode} />
 
       {
         <div className="flex items-center justify-between">

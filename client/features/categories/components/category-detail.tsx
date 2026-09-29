@@ -16,9 +16,7 @@ export function CategoryDetail() {
   const params = useParams<{ id: string }>()
   const router = useRouter()
   const { currentHousehold, isLoading: isHouseholdLoading } = useHousehold()
-  const { categories, refresh: refreshCategories } = useCategories(
-    currentHousehold?.id ?? null
-  )
+  const { categories, refresh: refreshCategories } = useCategories()
   const { category, setCategory, isLoading, error, refresh } = useCategory(
     currentHousehold?.id ?? null,
     params?.id ?? null

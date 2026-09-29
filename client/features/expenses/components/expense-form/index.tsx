@@ -11,7 +11,6 @@ import { ExpensePayerField } from "./expense-payer-field"
 import { ExpenseSplitSection } from "./expense-split-section"
 import { useExpenseForm } from "@/features/expenses"
 import type { ExpenseFormProps } from "../../types/expense-form.types"
-import { useHousehold } from "@/features/households"
 
 export function ExpenseForm(props: ExpenseFormProps) {
   const {
@@ -25,8 +24,6 @@ export function ExpenseForm(props: ExpenseFormProps) {
     submit,
   } = useExpenseForm(props)
 
-  const { currentHousehold } = useHousehold()
-
   return (
     <FormProvider {...form}>
       <form onSubmit={submit} id="household-expense-form" className="space-y-6">
@@ -39,11 +36,7 @@ export function ExpenseForm(props: ExpenseFormProps) {
           </Alert>
         )}
 
-        <ExpenseDetailsFields
-          householdId={props.householdId}
-          currency={props.currency}
-          disabled={financialFieldsLocked}
-        />
+        <ExpenseDetailsFields disabled={financialFieldsLocked} />
 
         <ExpenseParticipantsField disabled={financialFieldsLocked} />
 
@@ -52,7 +45,6 @@ export function ExpenseForm(props: ExpenseFormProps) {
           totalCents={totalCents}
           differenceCents={differenceCents}
           balanced={distributionBalanced}
-          currency={props.currency}
           splitMode={values.splitMode}
           disabled={financialFieldsLocked}
         />

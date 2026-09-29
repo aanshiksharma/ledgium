@@ -29,12 +29,14 @@ type ExpensesContextValue = {
   expenses: Expense[]
   isLoading: boolean
   isSubmitting: boolean
+  isDeleting: boolean
+  deletingId: string
   total: number
   error: string | null
   refresh: () => Promise<void>
   create: (input: CreateExpenseInput) => Promise<Expense>
   update: (expenseId: string, input: UpdateExpenseInput) => Promise<Expense>
-  deleteExpense: (expenseId: string) => void
+  deleteExpense: (expenseId: string) => Promise<void>
 }
 const ExpensesContext = createContext<ExpensesContextValue | null>(null)
 
@@ -45,6 +47,7 @@ export function ExpensesProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
   const [isDeleting, setIsDeleting] = useState<boolean>(false)
+  const [deletingId, setDeletingId] = useState<string>("")
   const [total, setTotal] = useState<number>(0)
   const [error, setError] = useState<string | null>(null)
 
@@ -137,6 +140,7 @@ export function ExpensesProvider({ children }: { children: ReactNode }) {
       if (!currentHousehold) throw new Error("No household is selected")
 
       setIsDeleting(true)
+      setDeletingId(expenseId)
       setError(null)
 
       try {
@@ -151,6 +155,7 @@ export function ExpensesProvider({ children }: { children: ReactNode }) {
         throw requestError
       } finally {
         setIsDeleting(false)
+        setDeletingId("")
       }
     },
     [currentHousehold, refresh]
@@ -161,6 +166,8 @@ export function ExpensesProvider({ children }: { children: ReactNode }) {
       expenses,
       isLoading,
       isSubmitting,
+      isDeleting,
+      deletingId,
       total,
       error,
       refresh,
@@ -172,6 +179,7 @@ export function ExpensesProvider({ children }: { children: ReactNode }) {
       expenses,
       isLoading,
       isSubmitting,
+      isDeleting,
       total,
       error,
       refresh,

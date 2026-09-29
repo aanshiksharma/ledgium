@@ -18,11 +18,7 @@ import {
 } from "@/features/expenses"
 
 export function RecentExpenses() {
-  const {
-    isLoading: expensesLoading,
-    isSubmitting: expenseSubmitting,
-    expenses,
-  } = useExpenses()
+  const { isLoading: expensesLoading, expenses } = useExpenses()
 
   return (
     <section className="flex flex-col gap-4 lg:gap-6">

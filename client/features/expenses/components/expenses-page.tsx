@@ -5,6 +5,7 @@ import { useMemo, useState } from "react"
 import {
   LayoutGrid,
   ListPlus,
+  RefreshCcw,
   SlidersHorizontal,
   TextAlignJustify,
 } from "lucide-react"
@@ -77,6 +78,10 @@ export function ExpensesPage() {
 
           <Button variant="outline" size="icon">
             <SlidersHorizontal />
+          </Button>
+
+          <Button variant="outline" size="icon" onClick={() => void refresh()}>
+            <RefreshCcw className={isLoading ? "animate-spin" : ""} />
           </Button>
 
           <ButtonGroup>

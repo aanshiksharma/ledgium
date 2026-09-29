@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { ApiError } from "../../utils/apiError.js";
 import {
   createHouseholdExpense,
+  deleteHouseholdExpense,
   getHouseholdExpense,
   listHouseholdExpenses,
   updateHouseholdExpense,
@@ -34,16 +35,12 @@ export async function create(req: Request, res: Response) {
 }
 
 export async function list(req: Request, res: Response) {
-  const expenses = await listHouseholdExpenses(
-    req.user!.id,
-    householdId(req),
-    {
-      ...(req.query.from ? { from: new Date(String(req.query.from)) } : {}),
-      ...(req.query.to ? { to: new Date(String(req.query.to)) } : {}),
-      limit: Number(req.query.limit ?? 50),
-      offset: Number(req.query.offset ?? 0),
-    },
-  );
+  const expenses = await listHouseholdExpenses(req.user!.id, householdId(req), {
+    ...(req.query.from ? { from: new Date(String(req.query.from)) } : {}),
+    ...(req.query.to ? { to: new Date(String(req.query.to)) } : {}),
+    limit: Number(req.query.limit ?? 50),
+    offset: Number(req.query.offset ?? 0),
+  });
 
   res.status(200).json({ success: true, data: expenses });
 }
@@ -67,4 +64,14 @@ export async function update(req: Request, res: Response) {
   );
 
   res.status(200).json({ success: true, data: { expense } });
+}
+
+export async function deleteById(req: Request, res: Response) {
+  const expense = await deleteHouseholdExpense(
+    req.user!.id,
+    householdId(req),
+    expenseId(req),
+  );
+
+  res.status(204).json({ success: true });
 }

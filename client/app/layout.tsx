@@ -11,6 +11,7 @@ import {
   MembersProvider,
 } from "@/providers"
 import { cn } from "@/lib/utils"
+import { Toaster } from "sonner"
 
 const manropeHeading = Manrope({
   subsets: ["latin"],
@@ -53,6 +54,8 @@ export default function RootLayout({
               <CategoriesProvider>
                 <ExpensesProvider>
                   <ThemeProvider>{children}</ThemeProvider>
+
+                  <Toaster theme="dark" position="top-center" />
                 </ExpensesProvider>
               </CategoriesProvider>
             </MembersProvider>

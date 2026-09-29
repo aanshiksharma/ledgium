@@ -16,18 +16,9 @@ import {
   ExpenseListRow,
   ExpenseListRowSkeleton,
 } from "@/features/expenses"
-import { Household } from "@/features/households"
 
-type Props = {
-  currentHousehold: Household
-}
-
-export function RecentExpenses({ currentHousehold }: Props) {
-  const {
-    isLoading: expensesLoading,
-    isSubmitting: expenseSubmitting,
-    expenses,
-  } = useExpenses()
+export function RecentExpenses() {
+  const { isLoading: expensesLoading, expenses } = useExpenses()
 
   return (
     <section className="flex flex-col gap-4 lg:gap-6">
@@ -39,7 +30,7 @@ export function RecentExpenses({ currentHousehold }: Props) {
         </Link>
       </header>
 
-      <section className="overflow-hidden rounded-xl bg-muted/25">
+      <section className="grid overflow-hidden rounded-xl bg-muted/25">
         {expensesLoading ? (
           <Table>
             <TableBody>

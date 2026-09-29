@@ -14,13 +14,15 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 
-import { useMembers } from "@/features/members"
-import { useHousehold } from "@/features/households"
+import { DeleteExpenseButton } from "./delete-expense-button"
+
 import {
   type Expense,
   ExpenseFormButton,
   useExpenses,
 } from "@/features/expenses"
+import { useMembers } from "@/features/members"
+import { toast } from "sonner"
 
 type Props = {
   expense: Expense
@@ -37,14 +39,30 @@ export function ExpenseListRow({ expense, hideDelete = false }: Props) {
     Icons.ShoppingBasket
 
   const { members } = useMembers()
-  const { currentHousehold } = useHousehold()
-  const { isSubmitting, isLoading } = useExpenses()
+  const { isDeleting, deletingId, deleteExpense } = useExpenses()
+
+  const handleDelete = (expenseId: string): void => {
+    toast.promise<void>(() => deleteExpense(expenseId), {
+      loading: "Deleting Expense",
+      success: "Expense has been deleted.",
+      error: "Error",
+    })
+  }
 
   return (
-    <TableRow>
+    <TableRow
+      className={
+        isDeleting && deletingId === expense.id
+          ? "pointer-events-none opacity-20"
+          : ""
+      }
+    >
       <TableCell className="w-full">
         <div className="flex items-center gap-5 pl-2">
-          <SafeIcon size={20} />
+          <SafeIcon
+            size={20}
+            style={{ color: expense.category?.color ?? "" }}
+          />
 
           <div className="flex flex-col gap-1">
             <span className="max-w-xs truncate">{expense.description}</span>
@@ -131,17 +149,14 @@ export function ExpenseListRow({ expense, hideDelete = false }: Props) {
           </Button>
         </ExpenseFormButton>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className={
-            hideDelete
-              ? "hidden"
-              : "ml-1 text-destructive hover:text-destructive"
-          }
-        >
-          <Icons.Trash />
-        </Button>
+        <DeleteExpenseButton className={hideDelete ? "hidden" : ""}>
+          <Button
+            variant="destructive"
+            onClick={() => handleDelete(expense.id)}
+          >
+            Delete
+          </Button>
+        </DeleteExpenseButton>
       </TableCell>
     </TableRow>
   )

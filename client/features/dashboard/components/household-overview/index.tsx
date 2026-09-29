@@ -11,12 +11,12 @@ export function HouseholdOverview({ currentHousehold }: Props) {
   return (
     <div className="flex flex-col gap-4 lg:gap-6">
       <section className="grid gap-4 lg:grid-cols-[2fr_3fr] lg:gap-6">
-        <HouseholdDetails currentHouseholdId={currentHousehold.id} />
+        <HouseholdDetails />
 
         <DebtsOverview currentHouseholdId={currentHousehold.id} />
       </section>
 
-      <RecentExpenses currentHousehold={currentHousehold} />
+      <RecentExpenses />
     </div>
   )
 }

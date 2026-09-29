@@ -16,13 +16,8 @@ import {
   ExpenseListRow,
   ExpenseListRowSkeleton,
 } from "@/features/expenses"
-import { Household } from "@/features/households"
 
-type Props = {
-  currentHousehold: Household
-}
-
-export function RecentExpenses({ currentHousehold }: Props) {
+export function RecentExpenses() {
   const {
     isLoading: expensesLoading,
     isSubmitting: expenseSubmitting,
@@ -39,7 +34,7 @@ export function RecentExpenses({ currentHousehold }: Props) {
         </Link>
       </header>
 
-      <section className="overflow-hidden rounded-xl bg-muted/25">
+      <section className="grid overflow-hidden rounded-xl bg-muted/25">
         {expensesLoading ? (
           <Table>
             <TableBody>

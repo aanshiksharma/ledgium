@@ -14,6 +14,7 @@ import {
   createExpense,
   getExpenses,
   updateExpense,
+  deleteExpenseById,
 } from "@/features/expenses/api/expense-api"
 
 import type {
@@ -33,6 +34,7 @@ type ExpensesContextValue = {
   refresh: () => Promise<void>
   create: (input: CreateExpenseInput) => Promise<Expense>
   update: (expenseId: string, input: UpdateExpenseInput) => Promise<Expense>
+  deleteExpense: (expenseId: string) => void
 }
 const ExpensesContext = createContext<ExpensesContextValue | null>(null)
 
@@ -42,6 +44,7 @@ export function ExpensesProvider({ children }: { children: ReactNode }) {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
+  const [isDeleting, setIsDeleting] = useState<boolean>(false)
   const [total, setTotal] = useState<number>(0)
   const [error, setError] = useState<string | null>(null)
 
@@ -129,6 +132,30 @@ export function ExpensesProvider({ children }: { children: ReactNode }) {
     [currentHousehold, refresh]
   )
 
+  const deleteExpense = useCallback(
+    async (expenseId: string) => {
+      if (!currentHousehold) throw new Error("No household is selected")
+
+      setIsDeleting(true)
+      setError(null)
+
+      try {
+        await deleteExpenseById(currentHousehold.id, expenseId)
+        await refresh()
+      } catch (requestError) {
+        const message =
+          requestError instanceof Error
+            ? requestError.message
+            : "Failed to delete expense"
+        setError(message)
+        throw requestError
+      } finally {
+        setIsDeleting(false)
+      }
+    },
+    [currentHousehold, refresh]
+  )
+
   const value = useMemo(
     () => ({
       expenses,
@@ -139,8 +166,19 @@ export function ExpensesProvider({ children }: { children: ReactNode }) {
       refresh,
       create,
       update,
+      deleteExpense,
     }),
-    [expenses, isLoading, isSubmitting, total, error, refresh, create, update]
+    [
+      expenses,
+      isLoading,
+      isSubmitting,
+      total,
+      error,
+      refresh,
+      create,
+      update,
+      deleteExpense,
+    ]
   )
 
   return (

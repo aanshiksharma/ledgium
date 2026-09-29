@@ -62,3 +62,12 @@ export async function updateExpense(
   )
   return response.expense
 }
+
+export async function deleteExpenseById(
+  householdId: string,
+  expenseId: string
+) {
+  return await apiRequest<void>(`${basePath(householdId)}/${expenseId}`, {
+    method: "DELETE",
+  })
+}

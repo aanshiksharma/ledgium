@@ -17,11 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useHousehold } from "@/features/households"
 import { useMembers } from "@/features/members"
 
-type Props = {
-  currentHouseholdId: string
-}
-
-export function HouseholdDetails({ currentHouseholdId }: Props) {
+export function HouseholdDetails() {
   const { isLoading: householdLoading, currentHousehold } = useHousehold()
   const { isLoading: membersLoading, members } = useMembers()
 

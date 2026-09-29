@@ -38,7 +38,7 @@ export function ExpenseListRow({ expense, hideDelete = false }: Props) {
 
   const { members } = useMembers()
   const { currentHousehold } = useHousehold()
-  const { isSubmitting, isLoading } = useExpenses()
+  const { isSubmitting, isLoading, deleteExpense } = useExpenses()
 
   return (
     <TableRow>
@@ -139,6 +139,10 @@ export function ExpenseListRow({ expense, hideDelete = false }: Props) {
               ? "hidden"
               : "ml-1 text-destructive hover:text-destructive"
           }
+          onClick={() => {
+            const confirmed = confirm("Are you sure?")
+            if (confirmed) void deleteExpense(expense.id)
+          }}
         >
           <Icons.Trash />
         </Button>

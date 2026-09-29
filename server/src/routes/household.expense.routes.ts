@@ -14,6 +14,7 @@ import {
   getById,
   list,
   update,
+  deleteById,
 } from "../modules/household-expenses/household-expense.controller.js";
 import {
   createHouseholdExpenseSchema,
@@ -39,11 +40,9 @@ router.get(
   list,
 );
 
-router.get(
-  "/:id",
-  validateParams(idParamsSchema),
-  getById,
-);
+router.get("/:id", validateParams(idParamsSchema), getById);
+
+router.delete("/:id", validateParams(idParamsSchema), deleteById);
 
 router.patch(
   "/:id",

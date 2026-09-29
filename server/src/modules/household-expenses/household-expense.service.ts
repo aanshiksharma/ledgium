@@ -17,6 +17,12 @@ type ExpenseInput = {
   }>;
 };
 
+// Roles allowed to edit or delete an expense.
+const EXPENSE_MANAGER_ROLES: string[] = ["OWNER", "ADMIN"];
+
+// Hard ceiling for interactive transactions so they never run past 5 seconds.
+const TRANSACTION_OPTIONS = { maxWait: 5000, timeout: 5000 };
+
 async function assertMembership(userId: string, householdId: string) {
   const membership = await prisma.householdMember.findUnique({
     where: { householdId_userId: { householdId, userId } },
@@ -25,6 +31,15 @@ async function assertMembership(userId: string, householdId: string) {
 
   if (!membership) throw new ApiError(404, "Household not found.");
   return membership;
+}
+
+function assertCanManageExpenses(role: string) {
+  if (!EXPENSE_MANAGER_ROLES.includes(role)) {
+    throw new ApiError(
+      403,
+      "Only the household owner or an admin can edit or delete expenses.",
+    );
+  }
 }
 
 async function assertMembersBelongToHousehold(
@@ -266,7 +281,11 @@ async function createOrUpdateExpense(
   input: ExpenseInput,
   expenseId?: string,
 ) {
-  await assertMembership(userId, householdId);
+  const membership = await assertMembership(userId, householdId);
+
+  // Creating is open to any member; editing is restricted to OWNER/ADMIN.
+  if (expenseId) assertCanManageExpenses(membership.role);
+
   await assertCategoryBelongsToHousehold(householdId, input.categoryId);
   await assertMembersBelongToHousehold(householdId, [
     ...input.payers.map((payer) => payer.userId),
@@ -420,7 +439,7 @@ async function createOrUpdateExpense(
     }
 
     return expense.id;
-  });
+  }, TRANSACTION_OPTIONS);
 
   // The transaction is intentionally committed before loading the full
   // response graph. This prevents the expensive nested read from extending
@@ -443,6 +462,50 @@ export async function updateHouseholdExpense(
   input: ExpenseInput,
 ) {
   return createOrUpdateExpense(userId, householdId, input, expenseId);
+}
+
+export async function deleteHouseholdExpense(
+  userId: string,
+  householdId: string,
+  expenseId: string,
+) {
+  const membership = await assertMembership(userId, householdId);
+  assertCanManageExpenses(membership.role);
+
+  await runInTransaction(async (tx) => {
+    const existing = await tx.householdExpense.findFirst({
+      where: { id: expenseId, householdId },
+      select: { id: true },
+    });
+
+    if (!existing) throw new ApiError(404, "Household expense not found.");
+
+    // Same rule as edits: once any debt from this expense has recorded
+    // settlements, the expense is part of the financial history.
+    const settledDebt = await tx.debt.findFirst({
+      where: {
+        householdExpenseId: existing.id,
+        settlementAllocations: { some: {} },
+      },
+      select: { id: true },
+    });
+
+    if (settledDebt) {
+      throw new ApiError(
+        409,
+        "This expense has recorded settlements and can no longer be deleted.",
+      );
+    }
+
+    await tx.debt.deleteMany({ where: { householdExpenseId: existing.id } });
+    await tx.expensePayer.deleteMany({ where: { expenseId: existing.id } });
+    await tx.expenseParticipant.deleteMany({
+      where: { expenseId: existing.id },
+    });
+    await tx.householdExpense.delete({ where: { id: existing.id } });
+  }, TRANSACTION_OPTIONS);
+
+  return { id: expenseId, deleted: true };
 }
 
 export async function listHouseholdExpenses(

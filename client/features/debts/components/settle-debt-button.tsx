@@ -55,9 +55,11 @@ export function SettleDebtButton({ balance }: { balance: DebtBalance }) {
           </DialogDescription>
         </DialogHeader>
 
-        <FormProvider {...form}>
-          <SettleDebtForm balance={balance} />
-        </FormProvider>
+        <div className="no-scrollbar max-h-[70vh] overflow-y-auto">
+          <FormProvider {...form}>
+            <SettleDebtForm balance={balance} />
+          </FormProvider>
+        </div>
 
         <DialogFooter>
           <DialogClose asChild>

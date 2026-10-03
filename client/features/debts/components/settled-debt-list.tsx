@@ -1,31 +1,17 @@
 "use client"
 
-import type { Debt } from "../types/debt.types"
+import { money } from "@/lib/utils"
 
-function money(value: string, currency: string) {
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(Number(value))
-}
-function date(value: string) {
-  return new Intl.DateTimeFormat(undefined, {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(value))
-}
+import { date, useDebts } from "@/features/debts"
 
-type Props = { debts: Debt[]; isLoading: boolean }
+export function SettledDebtList() {
+  const { settledDebts, isLoading } = useDebts()
 
-export function SettledDebtList({ debts, isLoading }: Props) {
   if (isLoading)
     return (
       <p className="text-sm text-muted-foreground">Loading settled debts...</p>
     )
-  if (!debts.length)
+  if (!settledDebts.length)
     return (
       <div className="rounded-2xl border p-6">
         <p className="text-sm text-muted-foreground">No settled debts found.</p>
@@ -41,7 +27,7 @@ export function SettledDebtList({ debts, isLoading }: Props) {
         <span className="text-right">Amount</span>
       </div>
       <div className="divide-y">
-        {debts.map((debt) => (
+        {settledDebts.map((debt) => (
           <article
             key={debt.id}
             className="grid gap-2 px-5 py-4 md:grid-cols-[1.2fr_1fr_1fr_auto] md:items-center md:gap-4"

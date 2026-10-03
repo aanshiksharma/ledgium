@@ -9,7 +9,6 @@ import { SettlementHistory } from "./settlement-history"
 import { SettledDebtList } from "./settled-debt-list"
 
 export function DebtsPage() {
-  const { user } = useAuth()
   const { currentHousehold, isLoading: householdLoading } = useHousehold()
   const {
     balances,
@@ -26,7 +25,7 @@ export function DebtsPage() {
     toggleSettledDebts,
     loadMoreSettlements,
     settle,
-  } = useDebts(currentHousehold?.id ?? null)
+  } = useDebts()
 
   if (householdLoading)
     return <p className="text-sm text-muted-foreground">Loading household...</p>
@@ -91,13 +90,7 @@ export function DebtsPage() {
             <p className="mt-1 text-2xl font-semibold">{balances.length}</p>
           </div>
         </div>
-        <DebtSummary
-          balances={balances}
-          currentUserId={user?.id ?? null}
-          isLoading={isLoading}
-          isSubmitting={isSubmitting}
-          onSettle={settle}
-        />
+        <DebtSummary />
       </section>
 
       <section className="space-y-4">
@@ -111,13 +104,7 @@ export function DebtsPage() {
           </div>
         </div>
 
-        <SettlementHistory
-          settlements={settlements}
-          total={settlementTotal}
-          isLoading={isLoading}
-          isLoadingMore={isLoadingMoreSettlements}
-          onLoadMore={loadMoreSettlements}
-        />
+        <SettlementHistory />
       </section>
 
       <section className="space-y-4">
@@ -138,12 +125,7 @@ export function DebtsPage() {
           </Button>
         </div>
 
-        {showSettledDebts && (
-          <SettledDebtList
-            debts={settledDebts}
-            isLoading={isLoadingSettledDebts}
-          />
-        )}
+        {showSettledDebts && <SettledDebtList />}
       </section>
     </section>
   )

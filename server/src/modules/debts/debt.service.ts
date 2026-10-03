@@ -2,6 +2,9 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "../../db/prisma.js";
 import { ApiError } from "../../utils/apiError.js";
 
+const SETTLEMENT_TX_TIMEOUT_MS = 5000; // hard limit enforced by Prisma
+const SETTLEMENT_TX_SOFT_LIMIT_MS = 4000; // our own guard, fires before Prisma's
+
 async function assertMembership(userId: string, householdId: string) {
   const membership = await prisma.householdMember.findUnique({
     where: { householdId_userId: { householdId, userId } },
@@ -256,7 +259,7 @@ export async function createDebtSettlement(
   input: {
     debtorId: string;
     creditorId: string;
-    amount: number;
+    allocations: { debtId: string; amount?: number }[];
     settledAt: Date;
     notes?: string | null;
   },
@@ -274,145 +277,223 @@ export async function createDebtSettlement(
     throw new ApiError(403, "Only the creditor can record this settlement.");
   }
 
-  const result = await prisma.$transaction(async (tx) => {
-    const debtorMembership = await tx.householdMember.findUnique({
-      where: {
-        householdId_userId: {
-          householdId,
-          userId: input.debtorId,
-        },
+  if (!input.allocations?.length) {
+    throw new ApiError(400, "Provide at least one debt allocation.");
+  }
+
+  // Moved out of the transaction to keep it as short as possible.
+  const debtorMembership = await prisma.householdMember.findUnique({
+    where: {
+      householdId_userId: {
+        householdId,
+        userId: input.debtorId,
       },
-      select: { id: true },
-    });
+    },
+    select: { id: true },
+  });
 
-    if (!debtorMembership) {
-      throw new ApiError(
-        400,
-        "Both settlement participants must belong to the household.",
-      );
-    }
-
-    const debts = await tx.debt.findMany({
-      where: {
-        debtorId: input.debtorId,
-        creditorId: input.creditorId,
-        sourceType: "HOUSEHOLD",
-        isActive: true,
-        householdExpense: { householdId },
-      },
-      select: {
-        id: true,
-        remainingAmount: true,
-        status: true,
-      },
-      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
-    });
-
-    if (!debts.length) {
-      throw new ApiError(
-        404,
-        "No outstanding debt exists between these members.",
-      );
-    }
-
-    const requestedAmount = new Prisma.Decimal(input.amount);
-
-    const outstanding = debts.reduce(
-      (sum, debt) => sum.add(debt.remainingAmount),
-      new Prisma.Decimal(0),
+  if (!debtorMembership) {
+    throw new ApiError(
+      400,
+      "Both settlement participants must belong to the household.",
     );
+  }
 
-    if (requestedAmount.greaterThan(outstanding)) {
-      throw new ApiError(
-        400,
-        "Settlement amount exceeds the outstanding debt between these members.",
-      );
-    }
+  let result: {
+    settlementId: string;
+    allocations: { debtId: string; amount: Prisma.Decimal }[];
+    remainingRelationship: Prisma.Decimal;
+  };
 
-    let remainingToAllocate = requestedAmount;
+  try {
+    result = await prisma.$transaction(
+      async (tx) => {
+        const startedAt = Date.now();
+        const assertTimeBudget = () => {
+          if (Date.now() - startedAt > SETTLEMENT_TX_SOFT_LIMIT_MS) {
+            throw new ApiError(
+              503,
+              "Recording the settlement took too long. Nothing was saved, please try again.",
+            );
+          }
+        };
 
-    const allocations: {
-      debtId: string;
-      amount: Prisma.Decimal;
-    }[] = [];
-
-    for (const debt of debts) {
-      if (remainingToAllocate.isZero()) break;
-
-      const allocationAmount = Prisma.Decimal.min(
-        debt.remainingAmount,
-        remainingToAllocate,
-      );
-
-      if (allocationAmount.greaterThan(0)) {
-        allocations.push({
-          debtId: debt.id,
-          amount: allocationAmount,
+        const debts = await tx.debt.findMany({
+          where: {
+            debtorId: input.debtorId,
+            creditorId: input.creditorId,
+            sourceType: "HOUSEHOLD",
+            isActive: true,
+            householdExpense: { householdId },
+          },
+          select: {
+            id: true,
+            remainingAmount: true,
+            status: true,
+          },
         });
 
-        remainingToAllocate = remainingToAllocate.sub(allocationAmount);
-      }
-    }
+        if (!debts.length) {
+          throw new ApiError(
+            404,
+            "No outstanding debt exists between these members.",
+          );
+        }
 
-    if (!remainingToAllocate.isZero()) {
+        const outstanding = debts.reduce(
+          (sum, debt) => sum.add(debt.remainingAmount),
+          new Prisma.Decimal(0),
+        );
+
+        // Looked up only among the pair's active household debts, so a
+        // caller cannot settle debts outside this pair or household.
+        const debtsById = new Map(debts.map((debt) => [debt.id, debt]));
+
+        // Per-debt settlement is the only way to settle: the caller chooses
+        // the debts and amounts, and nothing is allocated automatically.
+        const ids = input.allocations.map((item) => item.debtId);
+        if (new Set(ids).size !== ids.length) {
+          throw new ApiError(400, "Duplicate debt in settlement allocations.");
+        }
+
+        const allocations: {
+          debtId: string;
+          amount: Prisma.Decimal;
+        }[] = [];
+
+        for (const item of input.allocations) {
+          const debt = debtsById.get(item.debtId);
+
+          if (!debt) {
+            throw new ApiError(404, "Debt not found between these members.");
+          }
+
+          const allocationAmount =
+            item.amount === undefined
+              ? debt.remainingAmount // settle in full
+              : new Prisma.Decimal(item.amount);
+
+          if (allocationAmount.lessThanOrEqualTo(0)) {
+            throw new ApiError(
+              400,
+              "Allocation amount must be greater than zero.",
+            );
+          }
+
+          if (allocationAmount.greaterThan(debt.remainingAmount)) {
+            throw new ApiError(
+              400,
+              "Allocation exceeds the remaining amount of a debt.",
+            );
+          }
+
+          allocations.push({ debtId: debt.id, amount: allocationAmount });
+        }
+
+        const requestedAmount = allocations.reduce(
+          (sum, allocation) => sum.add(allocation.amount),
+          new Prisma.Decimal(0),
+        );
+
+        assertTimeBudget();
+
+        // Single insert for the settlement and all of its allocations.
+        const settlement = await tx.debtSettlement.create({
+          data: {
+            debtorId: input.debtorId,
+            creditorId: input.creditorId,
+            amount: requestedAmount,
+            settledAt: normalizeDate(input.settledAt),
+            createdBy: userId,
+            notes: input.notes?.trim() || null,
+            allocations: {
+              createMany: {
+                data: allocations.map((allocation) => ({
+                  debtId: allocation.debtId,
+                  amount: allocation.amount,
+                })),
+              },
+            },
+          },
+          select: {
+            id: true,
+          },
+        });
+
+        const fullySettledIds: string[] = [];
+        const partialUpdates: {
+          id: string;
+          remainingAmount: Prisma.Decimal;
+        }[] = [];
+
+        for (const allocation of allocations) {
+          const debt = debtsById.get(allocation.debtId);
+
+          if (!debt) {
+            throw new ApiError(
+              409,
+              "Settlement allocation target disappeared during the transaction.",
+            );
+          }
+
+          const remainingAmount = debt.remainingAmount.sub(allocation.amount);
+
+          if (remainingAmount.isZero()) {
+            fullySettledIds.push(debt.id);
+          } else {
+            partialUpdates.push({ id: debt.id, remainingAmount });
+          }
+        }
+
+        // All fully settled debts are closed with one query, regardless of count.
+        if (fullySettledIds.length) {
+          await tx.debt.updateMany({
+            where: { id: { in: fullySettledIds } },
+            data: {
+              remainingAmount: new Prisma.Decimal(0),
+              isActive: false,
+              status: "SETTLED",
+            },
+          });
+        }
+
+        // Partial updates need distinct values, so they run individually.
+        for (const update of partialUpdates) {
+          assertTimeBudget();
+
+          await tx.debt.update({
+            where: { id: update.id },
+            data: {
+              remainingAmount: update.remainingAmount,
+              isActive: true,
+              status: "PARTIALLY_SETTLED",
+            },
+          });
+        }
+
+        const remainingRelationship = outstanding.sub(requestedAmount);
+
+        return {
+          settlementId: settlement.id,
+          allocations,
+          remainingRelationship,
+        };
+      },
+      { maxWait: 2000, timeout: SETTLEMENT_TX_TIMEOUT_MS },
+    );
+  } catch (error) {
+    // P2028: Prisma's transaction timeout / expired transaction error.
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2028"
+    ) {
       throw new ApiError(
-        409,
-        "Unable to allocate the settlement across active debts.",
+        503,
+        "Recording the settlement took too long. Nothing was saved, please try again.",
       );
     }
-
-    const settlement = await tx.debtSettlement.create({
-      data: {
-        debtorId: input.debtorId,
-        creditorId: input.creditorId,
-        amount: requestedAmount,
-        settledAt: normalizeDate(input.settledAt),
-        createdBy: userId,
-        notes: input.notes?.trim() || null,
-        allocations: {
-          create: allocations.map((allocation) => ({
-            debtId: allocation.debtId,
-            amount: allocation.amount,
-          })),
-        },
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    for (const allocation of allocations) {
-      const debt = debts.find((item) => item.id === allocation.debtId);
-
-      if (!debt) {
-        throw new ApiError(
-          409,
-          "Settlement allocation target disappeared during the transaction.",
-        );
-      }
-
-      const remainingAmount = debt.remainingAmount.sub(allocation.amount);
-
-      const fullySettled = remainingAmount.isZero();
-
-      await tx.debt.update({
-        where: { id: debt.id },
-        data: {
-          remainingAmount,
-          isActive: !fullySettled,
-          status: fullySettled ? "SETTLED" : "PARTIALLY_SETTLED",
-        },
-      });
-    }
-
-    const remainingRelationship = outstanding.sub(requestedAmount);
-
-    return {
-      settlementId: settlement.id,
-      allocations,
-      remainingRelationship,
-    };
-  });
+    throw error;
+  }
 
   const settlement = await prisma.debtSettlement.findUniqueOrThrow({
     where: { id: result.settlementId },

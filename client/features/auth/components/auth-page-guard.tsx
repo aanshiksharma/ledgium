@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 
 import { useAuth } from "@/features/auth/hooks/use-auth"
+import { AuthLoadingPage } from "@/components/common/auth-loading-page"
 
 type AuthPageGuardProps = {
   children: React.ReactNode
@@ -41,11 +42,7 @@ export function AuthPageGuard({ children }: AuthPageGuardProps) {
   }, [isCheckingAuth, status, router])
 
   if (isCheckingAuth || status === "loading") {
-    return (
-      <main className="flex min-h-screen items-center justify-center">
-        <p>Loading...</p>
-      </main>
-    )
+    return <AuthLoadingPage />
   }
 
   if (status === "authenticated") {

@@ -1,38 +1,16 @@
 "use client"
 
-import type { Settlement } from "../types/debt.types"
+import { money } from "@/lib/utils"
+import { date, useDebts } from "@/features/debts"
 
-function money(value: string, currency: string) {
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(Number(value))
-}
-function date(value: string) {
-  return new Intl.DateTimeFormat(undefined, {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(value))
-}
-
-type Props = {
-  settlements: Settlement[]
-  total: number
-  isLoading: boolean
-  isLoadingMore: boolean
-  onLoadMore: () => Promise<void>
-}
-
-export function SettlementHistory({
-  settlements,
-  total,
-  isLoading,
-  isLoadingMore,
-  onLoadMore,
-}: Props) {
+export function SettlementHistory() {
+  const {
+    settlements,
+    settlementTotal,
+    isLoading,
+    isLoadingMoreSettlements,
+    loadMoreSettlements,
+  } = useDebts()
   if (isLoading)
     return (
       <p className="text-sm text-muted-foreground">
@@ -85,17 +63,18 @@ export function SettlementHistory({
           </article>
         ))}
       </div>
-      {settlements.length < total && (
+
+      {settlements.length < settlementTotal && (
         <div className="border-t p-4 text-center">
           <button
             type="button"
             className="text-sm font-medium underline underline-offset-4 disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={isLoadingMore}
-            onClick={() => void onLoadMore()}
+            disabled={isLoadingMoreSettlements}
+            onClick={() => void loadMoreSettlements()}
           >
-            {isLoadingMore
+            {isLoadingMoreSettlements
               ? "Loading..."
-              : `Load more (${total - settlements.length} remaining)`}
+              : `Load more (${settlementTotal - settlements.length} remaining)`}
           </button>
         </div>
       )}

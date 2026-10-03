@@ -6,12 +6,14 @@ import { ThemeProvider } from "@/components/theme-provider"
 import {
   AuthProvider,
   CategoriesProvider,
+  DebtsProvider,
   ExpensesProvider,
   HouseholdProvider,
   MembersProvider,
 } from "@/providers"
 import { cn } from "@/lib/utils"
 import { Toaster } from "sonner"
+import { TooltipProvider } from "@/components/ui/tooltip"
 
 const manropeHeading = Manrope({
   subsets: ["latin"],
@@ -48,19 +50,23 @@ export default function RootLayout({
       )}
     >
       <body>
-        <AuthProvider>
-          <HouseholdProvider>
-            <MembersProvider>
-              <CategoriesProvider>
-                <ExpensesProvider>
-                  <ThemeProvider>{children}</ThemeProvider>
+        <TooltipProvider>
+          <AuthProvider>
+            <HouseholdProvider>
+              <MembersProvider>
+                <CategoriesProvider>
+                  <ExpensesProvider>
+                    <DebtsProvider>
+                      <ThemeProvider>{children}</ThemeProvider>
 
-                  <Toaster theme="dark" position="top-center" />
-                </ExpensesProvider>
-              </CategoriesProvider>
-            </MembersProvider>
-          </HouseholdProvider>
-        </AuthProvider>
+                      <Toaster theme="dark" position="top-center" />
+                    </DebtsProvider>
+                  </ExpensesProvider>
+                </CategoriesProvider>
+              </MembersProvider>
+            </HouseholdProvider>
+          </AuthProvider>
+        </TooltipProvider>
       </body>
     </html>
   )

@@ -22,7 +22,13 @@ export type Debt = {
   dueDate: string | null
   createdAt: string
   updatedAt: string
-  householdExpense: { id: string; description: string; expenseDate: string; totalAmount: string; currency: string } | null
+  householdExpense: {
+    id: string
+    description: string
+    expenseDate: string
+    totalAmount: string
+    currency: string
+  } | null
   debtor: Person
   creditor: Person
   settlementAllocations?: {
@@ -81,17 +87,33 @@ export type Settlement = {
     debt: {
       id: string
       currency: string
-      householdExpense: { id: string; description: string; expenseDate: string } | null
+      householdExpense: {
+        id: string
+        description: string
+        expenseDate: string
+      } | null
     }
   }[]
 }
 
-export type SettlementListResponse = { settlements: Settlement[]; total: number }
+export type SettlementListResponse = {
+  settlements: Settlement[]
+  total: number
+}
+
+export type Allocation = {
+  debtId: string
+  amount: number
+}
+
+export type SettleDebtFormValues = {
+  allocations: Allocation[]
+}
 
 export type CreateSettlementInput = {
   debtorId: string
   creditorId: string
-  amount: number
+  allocations: Allocation[]
   settledAt: string
   notes?: string
 }

@@ -33,7 +33,7 @@ type Props = {
 
 export function DebtsOverview({ currentHouseholdId }: Props) {
   const { user } = useAuth()
-  const { isLoading: balanceLoading, balances } = useDebts(currentHouseholdId)
+  const { isLoading: balanceLoading, balances } = useDebts()
   const { isLoading: dashboardLoading, dashboard } =
     useDashboard(currentHouseholdId)
 

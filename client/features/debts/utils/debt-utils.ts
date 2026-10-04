@@ -1,14 +1,20 @@
-import { Allocation, DebtBalance } from "../types/debt.types"
+import {
+  Allocation,
+  CreateSettlementInput,
+  DebtBalance,
+} from "../types/debt.types"
 
 export function createSettlementInput(
   balance: DebtBalance,
-  allocations: Allocation[]
-) {
+  allocations: Allocation[],
+  notes?: string
+): CreateSettlementInput {
   return {
     debtorId: balance.debtor.id,
     creditorId: balance.creditor.id,
     allocations,
     settledAt: localDate(),
+    notes,
   }
 }
 

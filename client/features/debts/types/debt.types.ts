@@ -108,6 +108,7 @@ export type Allocation = {
 
 export type SettleDebtFormValues = {
   allocations: Allocation[]
+  notes?: string
 }
 
 export type CreateSettlementInput = {

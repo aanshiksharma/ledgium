@@ -1,7 +1,9 @@
 import { type LucideIcon } from "lucide-react"
 import * as Icons from "lucide-react"
 
-import { convertToPascalCase, convertToRelativeDate, money } from "@/lib/utils"
+import { toast } from "sonner"
+
+import { convertToRelativeDate, money } from "@/lib/utils"
 
 import {
   Avatar,
@@ -9,6 +11,7 @@ import {
   AvatarGroup,
   AvatarImage,
 } from "@/components/ui/avatar"
+import { DynamicIcon } from "@/components/common/dynamic-icon"
 import { TableCell, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
@@ -22,7 +25,6 @@ import {
   useExpenses,
 } from "@/features/expenses"
 import { useMembers } from "@/features/members"
-import { toast } from "sonner"
 
 type Props = {
   expense: Expense
@@ -30,14 +32,6 @@ type Props = {
 }
 
 export function ExpenseListRow({ expense, hideDelete = false }: Props) {
-  const iconName = convertToPascalCase(
-    expense.category?.icon ? expense.category.icon : ""
-  )
-
-  const SafeIcon =
-    (Icons as unknown as Record<string, LucideIcon>)[iconName] ||
-    Icons.ShoppingBasket
-
   const { members } = useMembers()
   const { isDeleting, deletingId, deleteExpense } = useExpenses()
 
@@ -59,7 +53,8 @@ export function ExpenseListRow({ expense, hideDelete = false }: Props) {
     >
       <TableCell className="w-full">
         <div className="flex items-center gap-5 pl-2">
-          <SafeIcon
+          <DynamicIcon
+            icon={expense.category?.icon ?? ""}
             size={20}
             style={{ color: expense.category?.color ?? "" }}
           />

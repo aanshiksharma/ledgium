@@ -6,6 +6,7 @@ import {
   Controller,
   useFormContext,
   ControllerRenderProps,
+  useWatch,
 } from "react-hook-form"
 
 import { type CheckedState } from "radix-ui/checkbox"
@@ -21,6 +22,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { DebtBalance, SettleDebtFormValues } from "../types/debt.types"
 import { Edit, X } from "lucide-react"
+import { Textarea } from "@/components/ui/textarea"
 
 function CustomAmountInputField({
   field,
@@ -89,10 +91,12 @@ function CustomAmountInputField({
 
 export function SettleDebtForm({ balance }: { balance: DebtBalance }) {
   const { control, setValue } = useFormContext<SettleDebtFormValues>()
+  const allocations = useWatch({ control, name: "allocations" })
+  const allSelected = allocations.length === balance.debts.length
 
   return (
     <form onSubmit={(e) => e.preventDefault()}>
-      <FieldGroup>
+      <FieldGroup className="p-2">
         <Controller
           name="allocations"
           control={control}
@@ -107,20 +111,22 @@ export function SettleDebtForm({ balance }: { balance: DebtBalance }) {
                   type="button"
                   className="text-muted-foreground"
                   onClick={() => {
-                    setValue(
-                      "allocations",
-                      balance.debts.map((val) => ({
-                        debtId: val.id,
-                        amount: Number(val.remainingAmount),
-                      }))
-                    )
+                    !allSelected
+                      ? setValue(
+                          "allocations",
+                          balance.debts.map((val) => ({
+                            debtId: val.id,
+                            amount: Number(val.remainingAmount),
+                          }))
+                        )
+                      : setValue("allocations", [])
                   }}
                 >
-                  Select All
+                  {!allSelected ? "Select All" : "Deselect All"}
                 </Button>
               </FieldLabel>
 
-              <FieldContent>
+              <FieldContent className="gap-2">
                 {balance.debts.map((debt) => {
                   const checked: CheckedState =
                     field.value.filter((val) => val.debtId === debt.id).length >
@@ -170,6 +176,21 @@ export function SettleDebtForm({ balance }: { balance: DebtBalance }) {
                   )
                 })}
               </FieldContent>
+            </Field>
+          )}
+        />
+
+        <Controller
+          name="notes"
+          control={control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel>Notes</FieldLabel>
+              <Textarea
+                placeholder="Write optional notes to remember the settlement better"
+                value={field.value}
+                onChange={field.onChange}
+              />
             </Field>
           )}
         />

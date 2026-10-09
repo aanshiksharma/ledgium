@@ -6,6 +6,7 @@ import { Sidebar } from "lucide-react"
 
 import { Button } from "../ui/button"
 import { useSidebar } from "../ui/sidebar"
+import { GlobalCta } from "../common/global-cta"
 
 export function AppHeader() {
   const { toggleSidebar } = useSidebar()
@@ -24,7 +25,9 @@ export function AppHeader() {
 
       <h1 className="capitalize">{label}</h1>
 
-      <div className="justify-self-end"></div>
+      <div className="justify-self-end">
+        <GlobalCta />
+      </div>
     </header>
   )
 }

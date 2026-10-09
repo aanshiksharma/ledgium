@@ -75,38 +75,35 @@ export function DebtSummary() {
               </CardDescription>
 
               <CardAction>
-                {canSettle && <SettleDebtButton balance={balance} />}
+                <p className="text-xl">
+                  {money(balance.outstandingAmount, balance.currency)}
+                </p>
               </CardAction>
             </CardHeader>
 
-            <CardContent>
-              <ItemGroup>
-                {balance.debts.map((debt) => (
-                  <Item key={debt.id} size="sm" variant="muted">
-                    <ItemContent>
-                      <ItemTitle>{debt.description}</ItemTitle>
-                      <ItemDescription className="text-xs">
-                        {date(debt.expenseDate)}
-                      </ItemDescription>
-                    </ItemContent>
+            <CardContent className="h-full">
+              <div className="flex h-full flex-col justify-between gap-2">
+                <ItemGroup>
+                  {balance.debts.map((debt) => (
+                    <Item key={debt.id} size="sm" variant="muted">
+                      <ItemContent>
+                        <ItemTitle>{debt.description}</ItemTitle>
+                        <ItemDescription className="text-xs">
+                          {date(debt.expenseDate)}
+                        </ItemDescription>
+                      </ItemContent>
 
-                    <ItemActions>
-                      <span className="shrink-0 text-sm font-medium">
-                        {money(debt.remainingAmount, balance.currency)}
-                      </span>
-                    </ItemActions>
-                  </Item>
-                ))}
+                      <ItemActions>
+                        <span className="shrink-0 text-sm font-medium">
+                          {money(debt.remainingAmount, balance.currency)}
+                        </span>
+                      </ItemActions>
+                    </Item>
+                  ))}
+                </ItemGroup>
 
-                <Item variant="muted">
-                  <ItemContent>
-                    <ItemTitle>Total</ItemTitle>
-                  </ItemContent>
-                  <ItemActions>
-                    {money(balance.outstandingAmount, balance.currency)}
-                  </ItemActions>
-                </Item>
-              </ItemGroup>
+                {canSettle && <SettleDebtButton balance={balance} />}
+              </div>
             </CardContent>
           </Card>
         )

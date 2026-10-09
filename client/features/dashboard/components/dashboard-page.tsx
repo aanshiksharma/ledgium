@@ -57,7 +57,7 @@ export function DashboardPage() {
   return (
     <div className="flex flex-col gap-6">
       {error && (
-        <div className="rounded-2xl border border-destructive/30 p-5">
+        <section className="rounded-2xl border border-destructive/30 p-5">
           <Item size="xs">
             <ItemHeader>
               <ItemTitle>{error}</ItemTitle>
@@ -72,50 +72,10 @@ export function DashboardPage() {
               </ItemActions>
             </ItemHeader>
           </Item>
-        </div>
+        </section>
       )}
 
-      <Tabs defaultValue="household">
-        <div className="mb-4 flex items-start justify-between border-b">
-          <TabsList variant="line">
-            <TabsTrigger value="household">Household</TabsTrigger>
-
-            <TabsTrigger value="personal">Personal</TabsTrigger>
-          </TabsList>
-        </div>
-
-        <TabsContent value="household">
-          <HouseholdOverview currentHousehold={currentHousehold} />
-        </TabsContent>
-
-        <TabsContent value="personal">
-          {dashboardLoading || !dashboard ? (
-            "Loading"
-          ) : (
-            <div className="flex flex-col gap-4">
-              <DashboardSummary
-                totalBalance={dashboard.totalBalance}
-                periodActivity={dashboard.periodActivity}
-                currency={dashboard.household.currency}
-              />
-
-              <div className="grid gap-4 lg:grid-cols-2">
-                <AccountBalances accounts={dashboard.accounts} />
-
-                <CategoryBreakdown
-                  categoryTotals={dashboard.categoryTotals}
-                  currency={dashboard.household.currency}
-                />
-              </div>
-
-              <RecentTransactions
-                transactions={dashboard.recentTransactions}
-                currency={dashboard.household.currency}
-              />
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+      <HouseholdOverview currentHousehold={currentHousehold} />
     </div>
   )
 }

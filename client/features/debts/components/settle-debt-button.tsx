@@ -31,7 +31,7 @@ export function SettleDebtButton({ balance }: { balance: DebtBalance }) {
   const form = useForm<SettleDebtFormValues>({
     defaultValues: { allocations: defaultFormValues },
   })
-  const { control, setValue } = form
+  const { control, setValue, getValues } = form
   const allocations = useWatch({ control, name: "allocations" })
 
   const { isSubmitting, settle } = useDebts()
@@ -66,10 +66,14 @@ export function SettleDebtButton({ balance }: { balance: DebtBalance }) {
             <Button variant="ghost">Cancel</Button>
           </DialogClose>
           <Button
-            disabled={isSubmitting}
+            disabled={isSubmitting || allocations.length === 0}
             type="submit"
             onClick={() => {
-              const input = createSettlementInput(balance, allocations)
+              const input = createSettlementInput(
+                balance,
+                allocations,
+                getValues("notes")
+              )
               settle(input)
             }}
           >

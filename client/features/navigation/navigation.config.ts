@@ -42,9 +42,21 @@ export const navigationGroups: NavigationGroup[] = [
         enabled: true,
       },
       {
-        label: "Debts and Settlements",
+        label: "Debts",
         href: "/debts-and-settlements",
         icon: HandCoins,
+        enabled: true,
+      },
+      {
+        label: "Settlements",
+        href: "/settlements",
+        icon: HandCoins,
+        enabled: false,
+      },
+      {
+        label: "Categories",
+        href: "/categories",
+        icon: Tags,
         enabled: true,
       },
       {
@@ -56,32 +68,8 @@ export const navigationGroups: NavigationGroup[] = [
     ],
   },
   {
-    title: "Personal",
-    items: [
-      {
-        label: "Accounts",
-        href: "/accounts",
-        icon: CreditCard,
-        enabled: true,
-      },
-
-      {
-        label: "Transactions",
-        href: "/transactions",
-        icon: ListChecks,
-        enabled: true,
-      },
-    ],
-  },
-  {
     title: "General",
     items: [
-      {
-        label: "Categories",
-        href: "/categories",
-        icon: Tags,
-        enabled: true,
-      },
       {
         label: "Settings",
         href: "/settings",

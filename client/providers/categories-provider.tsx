@@ -28,11 +28,14 @@ import { useHousehold } from "./household-provider"
 type CategoriesContextValue = {
   categories: Category[]
   isLoading: boolean
+  isCreating: boolean
+  isUpdating: boolean
+  isDeleting: boolean
   error: string | null
-  refresh: () => void
-  create: (input: CreateCategoryInput) => Promise<Category>
-  update: (categoryId: string, input: UpdateCategoryInput) => Promise<Category>
-  remove: (categoryId: string) => void
+  refresh: () => Promise<void>
+  create: (input: CreateCategoryInput) => Promise<void>
+  update: (categoryId: string, input: UpdateCategoryInput) => Promise<void>
+  remove: (categoryId: string) => Promise<void>
 }
 
 const CategoriesContext = createContext<CategoriesContextValue | null>(null)
@@ -41,7 +44,10 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
   const { currentHousehold } = useHousehold()
 
   const [categories, setCategories] = useState<Category[]>([])
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [isCreating, setIsCreating] = useState<boolean>(false)
+  const [isUpdating, setIsUpdating] = useState<boolean>(false)
+  const [isDeleting, setIsDeleting] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
@@ -74,9 +80,22 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
     async (input: CreateCategoryInput) => {
       if (!currentHousehold) throw new Error("No household is selected.")
 
-      const category = await createCategory(currentHousehold.id, input)
-      setCategories((current) => [...current, category])
-      return category
+      setIsCreating(true)
+
+      try {
+        const category = await createCategory(currentHousehold.id, input)
+        setCategories((current) => [...current, category])
+      } catch (err) {
+        const error =
+          err instanceof Error
+            ? err.message
+            : "Could not create category. Please try again"
+
+        setError(error)
+      } finally {
+        setIsCreating(false)
+        void refresh()
+      }
     },
     [currentHousehold]
   )
@@ -85,15 +104,28 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
     async (categoryId: string, input: UpdateCategoryInput) => {
       if (!currentHousehold) throw new Error("No household is selected.")
 
-      const category = await updateCategory(
-        currentHousehold.id,
-        categoryId,
-        input
-      )
-      setCategories((current) =>
-        current.map((item) => (item.id === category.id ? category : item))
-      )
-      return category
+      setIsUpdating(true)
+
+      try {
+        const category = await updateCategory(
+          currentHousehold.id,
+          categoryId,
+          input
+        )
+        setCategories((current) =>
+          current.map((item) => (item.id === category.id ? category : item))
+        )
+      } catch (err) {
+        const error =
+          err instanceof Error
+            ? err.message
+            : "Could not create category. Please try again"
+
+        setError(error)
+      } finally {
+        setIsUpdating(false)
+        void refresh()
+      }
     },
     [currentHousehold]
   )
@@ -102,10 +134,24 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
     async (categoryId: string) => {
       if (!currentHousehold) throw new Error("No household is selected.")
 
-      await deleteCategory(currentHousehold.id, categoryId)
-      setCategories((current) =>
-        current.filter((item) => item.id !== categoryId)
-      )
+      setIsDeleting(true)
+
+      try {
+        await deleteCategory(currentHousehold.id, categoryId)
+        setCategories((current) =>
+          current.filter((item) => item.id !== categoryId)
+        )
+      } catch (err) {
+        const error =
+          err instanceof Error
+            ? err.message
+            : "Could not delete category. Please try again"
+
+        setError(error)
+      } finally {
+        setIsDeleting(false)
+        void refresh()
+      }
     },
     [currentHousehold]
   )
@@ -114,13 +160,27 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
     () => ({
       categories,
       isLoading,
+      isCreating,
+      isUpdating,
+      isDeleting,
       error,
       refresh,
       create,
       update,
       remove,
     }),
-    [categories, isLoading, error, refresh, create, update, remove]
+    [
+      categories,
+      isLoading,
+      isCreating,
+      isUpdating,
+      isDeleting,
+      error,
+      refresh,
+      create,
+      update,
+      remove,
+    ]
   )
 
   return (

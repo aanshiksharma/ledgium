@@ -8,17 +8,18 @@ export type Category = {
   isDefault: boolean
   createdAt: string
   updatedAt: string
-  children?: Category[]
+  children: Category[]
 }
 
-export type CreateCategoryInput = {
+export type CategoryInput = {
   name: string
   icon?: string
   color?: string
   parentId?: string | null
 }
 
-export type UpdateCategoryInput = Partial<CreateCategoryInput>
+export type CreateCategoryInput = CategoryInput
+export type UpdateCategoryInput = CategoryInput
 
 export type CategoryListResponse = {
   categories: Category[]

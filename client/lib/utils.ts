@@ -30,9 +30,3 @@ export const convertToRelativeDate = (date: Date): string => {
 
   return `at ${date.toLocaleDateString()}`
 }
-
-export const convertToPascalCase = (str: string): string =>
-  str
-    .split("-")
-    .map((word) => word.replace(word.charAt(0), word.charAt(0).toUpperCase()))
-    .join("")

@@ -43,7 +43,7 @@ export const navigationGroups: NavigationGroup[] = [
       },
       {
         label: "Debts",
-        href: "/debts-and-settlements",
+        href: "/debts",
         icon: HandCoins,
         enabled: true,
       },
@@ -51,7 +51,7 @@ export const navigationGroups: NavigationGroup[] = [
         label: "Settlements",
         href: "/settlements",
         icon: HandCoins,
-        enabled: false,
+        enabled: true,
       },
       {
         label: "Categories",

@@ -63,11 +63,14 @@ export function SettleDebtButton({ balance }: { balance: DebtBalance }) {
 
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="ghost">Cancel</Button>
+            <Button variant="ghost" className="flex-1">
+              Cancel
+            </Button>
           </DialogClose>
           <Button
-            disabled={isSubmitting || allocations.length === 0}
             type="submit"
+            className="flex-1"
+            disabled={isSubmitting || allocations.length === 0}
             onClick={() => {
               const input = createSettlementInput(
                 balance,

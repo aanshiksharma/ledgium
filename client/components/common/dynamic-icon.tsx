@@ -1,7 +1,7 @@
 import { ElementType } from "react"
 import * as Icons from "lucide-react"
 
-import { convertToPascalCase } from "@/lib/utils"
+import { convertToPascalCase } from "@/lib/text-utils"
 
 type Props = {
   icon: string | null

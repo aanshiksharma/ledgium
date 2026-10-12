@@ -1,70 +1,75 @@
 "use client"
 
+import { SlidersHorizontal, RefreshCcw } from "lucide-react"
+
+import { Field } from "@/components/ui/field"
+import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { useAuth } from "@/features/auth/hooks/use-auth"
-import { useHousehold } from "@/features/households"
-import { useDebts } from "../hooks/use-debts"
-import { DebtSummary } from "./debt-summary"
-import { SettlementHistory } from "./settlement-history"
-import { SettledDebtList } from "./settled-debt-list"
+
+import {
+  LoadingHousehold,
+  NoCurrentHousehold,
+  useHousehold,
+} from "@/features/households"
+
+import { useDebts, DebtSummary } from "@/features/debts"
+import { useAuth } from "@/features/auth"
+import { money } from "@/lib/utils"
 
 export function DebtsPage() {
-  const { currentHousehold, isLoading: householdLoading } = useHousehold()
   const {
-    balances,
-    settlements,
-    settlementTotal,
-    settledDebts,
-    showSettledDebts,
-    isLoadingSettledDebts,
-    isLoadingMoreSettlements,
-    isLoading,
-    isSubmitting,
-    error,
-    refresh,
-    toggleSettledDebts,
-    loadMoreSettlements,
-    settle,
-  } = useDebts()
+    households,
+    currentHousehold,
+    isLoading: householdLoading,
+  } = useHousehold()
+  const { user } = useAuth()
 
-  if (householdLoading)
-    return <p className="text-sm text-muted-foreground">Loading household...</p>
+  const { balances, isLoading, isSubmitting, error, refresh } = useDebts()
+
+  if (householdLoading) return <LoadingHousehold />
 
   if (!currentHousehold) {
-    return (
-      <div className="rounded-2xl border p-6">
-        <h2 className="font-semibold">No household selected</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Select or create a household before managing debts and settlements.
-        </p>
-      </div>
-    )
+    return <NoCurrentHousehold households={households} />
   }
 
-  const totalOutstanding = balances.reduce(
-    (sum, balance) => sum + Number(balance.outstandingAmount),
-    0
-  )
+  const totalOutstanding = !user
+    ? 0
+    : balances.reduce(
+        (sum, balance) =>
+          sum + balance.debtor.id === user.id
+            ? Number(balance.outstandingAmount)
+            : 0,
+        0
+      )
 
   return (
-    <section className="space-y-8">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
+    <>
+      <section className="flex flex-col gap-4 lg:gap-6">
+        <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <h1 className="text-2xl font-semibold tracking-tight">
-            Debts and Settlements
+            Manage Debts
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            See who owes whom and keep a permanent record of settlements.
-          </p>
+        </header>
+
+        <div className="flex items-center gap-2">
+          <Field className="flex-1">
+            <Input placeholder="Search debts..." />
+          </Field>
+
+          <Button variant="outline" size="icon">
+            <SlidersHorizontal />
+          </Button>
+
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => void refresh()}
+            disabled={isLoading || isSubmitting}
+          >
+            <RefreshCcw className={isLoading ? "animate-spin" : ""} />
+          </Button>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => void refresh()}
-          disabled={isLoading || isSubmitting}
-        >
-          Refresh
-        </Button>
-      </header>
+      </section>
 
       {error && (
         <p className="rounded-xl border border-destructive/30 p-4 text-sm text-destructive">
@@ -77,12 +82,7 @@ export function DebtsPage() {
           <div className="rounded-2xl border p-5">
             <p className="text-sm text-muted-foreground">Outstanding debt</p>
             <p className="mt-1 text-2xl font-semibold">
-              {new Intl.NumberFormat(undefined, {
-                style: "currency",
-                currency: currentHousehold.currency,
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              }).format(totalOutstanding)}
+              {money(totalOutstanding, currentHousehold.currency)}
             </p>
           </div>
           <div className="rounded-2xl border p-5">
@@ -90,43 +90,9 @@ export function DebtsPage() {
             <p className="mt-1 text-2xl font-semibold">{balances.length}</p>
           </div>
         </div>
+
         <DebtSummary />
       </section>
-
-      <section className="space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2 className="text-lg font-semibold">Settlement history</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Every recorded payment remains here even after the related debts
-              are fully settled.
-            </p>
-          </div>
-        </div>
-
-        <SettlementHistory />
-      </section>
-
-      <section className="space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-lg font-semibold">Settled debts</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Historical debt objects are hidden by default.
-            </p>
-          </div>
-
-          <Button
-            variant="outline"
-            onClick={() => void toggleSettledDebts()}
-            disabled={isLoadingSettledDebts}
-          >
-            {showSettledDebts ? "Hide settled debts" : "Show settled debts"}
-          </Button>
-        </div>
-
-        {showSettledDebts && <SettledDebtList />}
-      </section>
-    </section>
+    </>
   )
 }

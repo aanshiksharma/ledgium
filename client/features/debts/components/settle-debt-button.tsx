@@ -82,7 +82,7 @@ export function SettleDebtButton({ balance }: { balance: DebtBalance }) {
                 <Loader2 className="animate-spin" /> Settling
               </div>
             ) : (
-              "Settle"
+              `Settle ${getValues("allocations").reduce((sum, allocation) => sum + Number(allocation.amount), 0)}`
             )}
           </Button>
         </DialogFooter>

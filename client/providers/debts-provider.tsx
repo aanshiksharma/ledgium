@@ -22,7 +22,8 @@ import type {
   DebtBalance,
   Settlement,
 } from "@/features/debts"
-import { useHousehold } from "./household-provider"
+import { useHousehold } from "@/features/households"
+import { useExpenses } from "@/features/expenses"
 
 type DebtsContextValue = {
   balances: DebtBalance[]
@@ -45,6 +46,7 @@ const DebtsContext = createContext<DebtsContextValue | null>(null)
 
 export function DebtsProvider({ children }: { children: ReactNode }) {
   const { currentHousehold } = useHousehold()
+  const { expenses } = useExpenses()
 
   const [balances, setBalances] = useState<DebtBalance[]>([])
   const [settlements, setSettlements] = useState<Settlement[]>([])
@@ -90,7 +92,7 @@ export function DebtsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     void refresh()
-  }, [refresh])
+  }, [refresh, expenses])
 
   const loadSettledDebts = useCallback(async () => {
     if (!currentHousehold) return

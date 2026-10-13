@@ -21,9 +21,9 @@ import {
   createSettlementInput,
   DebtBalance,
   SettleDebtFormValues,
+  SettleDebtForm,
   useDebts,
 } from "@/features/debts"
-import { SettleDebtForm } from "./settle-debt-form"
 
 const defaultFormValues: Allocation[] = []
 
@@ -63,13 +63,13 @@ export function SettleDebtButton({ balance }: { balance: DebtBalance }) {
 
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="ghost" className="flex-1">
+            <Button variant="ghost" className="sm:flex-1">
               Cancel
             </Button>
           </DialogClose>
           <Button
             type="submit"
-            className="flex-1"
+            className="sm:flex-1"
             disabled={isSubmitting || allocations.length === 0}
             onClick={() => {
               const input = createSettlementInput(

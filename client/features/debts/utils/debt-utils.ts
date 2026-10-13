@@ -2,7 +2,9 @@ import {
   Allocation,
   CreateSettlementInput,
   DebtBalance,
-} from "../types/debt.types"
+} from "@/features/debts"
+
+import { localDate } from "@/lib/utils"
 
 export function createSettlementInput(
   balance: DebtBalance,
@@ -16,17 +18,4 @@ export function createSettlementInput(
     settledAt: localDate(),
     notes,
   }
-}
-
-export function localDate() {
-  const now = new Date()
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
-}
-
-export function date(value: string) {
-  return new Intl.DateTimeFormat(undefined, {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(value))
 }

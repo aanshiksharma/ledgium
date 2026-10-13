@@ -2,8 +2,12 @@ import { ReactNode } from "react"
 
 import { ChevronsUpDown, HandCoins, NotebookText } from "lucide-react"
 
-import { convertToRelativeDate, money } from "@/lib/utils"
-import { extractInitials } from "@/lib/text-utils"
+import {
+  date,
+  convertToRelativeDate,
+  money,
+  extractInitials,
+} from "@/lib/utils"
 
 import {
   Dialog,
@@ -32,7 +36,7 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 
 import { useHousehold } from "@/features/households"
-import { date, Settlement } from "@/features/debts"
+import { Settlement } from "@/features/debts"
 
 type Props = { children: ReactNode; settlement: Settlement }
 

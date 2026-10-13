@@ -22,19 +22,17 @@ export function GlobalCta() {
     <ButtonGroup>
       <ExpenseFormButton>
         {isMobile ? (
-          <Button size="icon-sm" className="pl-1.75">
+          <Button size="icon" className="pl-1.75">
             <ListPlus />
           </Button>
         ) : (
-          <Button size="sm" className="pl-4">
-            Add Expense
-          </Button>
+          <Button className="pl-4">Add Expense</Button>
         )}
       </ExpenseFormButton>
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button size="icon-sm" className="pr-1">
+          <Button size="icon" className="pr-1">
             <ChevronDown />
           </Button>
         </DropdownMenuTrigger>

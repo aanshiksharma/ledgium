@@ -16,7 +16,7 @@ export function AppHeader() {
   const label = currentView.split("-").join(" ")
 
   return (
-    <header className="sticky top-0 z-50 grid grid-cols-3 items-center justify-items-center border-b bg-background p-2 text-sm">
+    <header className="sticky top-0 z-50 grid grid-cols-3 items-center justify-items-center border-b bg-background px-2 py-3 text-sm">
       <div className="justify-self-start">
         <Button variant="ghost" size="icon" onClick={toggleSidebar}>
           <Sidebar />

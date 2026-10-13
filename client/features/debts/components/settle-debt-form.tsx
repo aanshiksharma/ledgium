@@ -2,6 +2,8 @@
 
 import { useState } from "react"
 
+import { Edit, X } from "lucide-react"
+
 import {
   Controller,
   useFormContext,
@@ -18,11 +20,11 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { DebtBalance, SettleDebtFormValues } from "../types/debt.types"
-import { Edit, X } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+
+import { DebtBalance, SettleDebtFormValues } from "@/features/debts"
 
 function CustomAmountInputField({
   field,
@@ -65,7 +67,7 @@ function CustomAmountInputField({
         type="number"
         min={0}
         max={debt.remainingAmount}
-        className="w-32 text-right"
+        className="w-24 text-right"
         value={amount}
         disabled={disabled || !allocation}
         onChange={(e) => handleAmountChange(e.target.value)}

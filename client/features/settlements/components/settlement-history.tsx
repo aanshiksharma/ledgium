@@ -41,7 +41,7 @@ export function SettlementHistory() {
     )
 
   return (
-    <div className="rounded-2xl">
+    <section>
       <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
         {settlements.map((settlement) => (
           <SettlementCard key={settlement.id} settlement={settlement} />
@@ -62,6 +62,6 @@ export function SettlementHistory() {
           </button>
         </div>
       )}
-    </div>
+    </section>
   )
 }

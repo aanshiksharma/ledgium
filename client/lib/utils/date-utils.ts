@@ -1,15 +1,3 @@
-export { cn } from "cn"
-
-export const money = (value: number | string | null, currency: string) =>
-  value == null
-    ? "—"
-    : new Intl.NumberFormat(undefined, {
-        style: "currency",
-        currency,
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }).format(Number(value))
-
 export const convertToRelativeDate = (date: Date): string => {
   const today = Date.now()
   const timePassed = today - date.getTime()
@@ -29,4 +17,17 @@ export const convertToRelativeDate = (date: Date): string => {
   if (timePassed / week < 2) return "last week"
 
   return `at ${date.toLocaleDateString()}`
+}
+
+export function localDate() {
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
+}
+
+export function date(value: string) {
+  return new Intl.DateTimeFormat(undefined, {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(value))
 }

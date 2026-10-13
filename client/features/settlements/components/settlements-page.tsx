@@ -41,9 +41,7 @@ export function SettlementsPage() {
         </section>
       </section>
 
-      <section>
-        <SettlementHistory />
-      </section>
+      <SettlementHistory />
     </>
   )
 }

@@ -13,8 +13,6 @@ import {
 } from "@/features/households"
 
 import { useDebts, DebtSummary } from "@/features/debts"
-import { useAuth } from "@/features/auth"
-import { money } from "@/lib/utils"
 
 export function DebtsPage() {
   const {
@@ -22,25 +20,13 @@ export function DebtsPage() {
     currentHousehold,
     isLoading: householdLoading,
   } = useHousehold()
-  const { user } = useAuth()
-
-  const { balances, isLoading, isSubmitting, error, refresh } = useDebts()
+  const { isLoading, isSubmitting, error, refresh } = useDebts()
 
   if (householdLoading) return <LoadingHousehold />
 
   if (!currentHousehold) {
     return <NoCurrentHousehold households={households} />
   }
-
-  const totalOutstanding = !user
-    ? 0
-    : balances.reduce(
-        (sum, balance) =>
-          sum + balance.debtor.id === user.id
-            ? Number(balance.outstandingAmount)
-            : 0,
-        0
-      )
 
   return (
     <>
@@ -77,22 +63,7 @@ export function DebtsPage() {
         </p>
       )}
 
-      <section className="space-y-4">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="rounded-2xl border p-5">
-            <p className="text-sm text-muted-foreground">Outstanding debt</p>
-            <p className="mt-1 text-2xl font-semibold">
-              {money(totalOutstanding, currentHousehold.currency)}
-            </p>
-          </div>
-          <div className="rounded-2xl border p-5">
-            <p className="text-sm text-muted-foreground">Debt relationships</p>
-            <p className="mt-1 text-2xl font-semibold">{balances.length}</p>
-          </div>
-        </div>
-
-        <DebtSummary />
-      </section>
+      <DebtSummary />
     </>
   )
 }

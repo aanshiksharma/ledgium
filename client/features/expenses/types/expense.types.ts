@@ -77,10 +77,10 @@ export type CreateExpenseInput = ExpenseInput
 export type UpdateExpenseInput = ExpenseInput
 
 export type ExpenseFilters = {
-  from?: string
-  to?: string
-  limit?: number
-  offset?: number
+  from: string
+  to: string
+  limit: number
+  offset: number
 }
 
 export type ExpenseListResponse = {

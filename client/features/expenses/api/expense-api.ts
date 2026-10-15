@@ -14,7 +14,7 @@ function basePath(householdId: string) {
 
 export async function getExpenses(
   householdId: string,
-  filters: ExpenseFilters = {}
+  filters: ExpenseFilters
 ) {
   const params = new URLSearchParams()
 

@@ -8,6 +8,8 @@ import {
   useCallback,
   useMemo,
   ReactNode,
+  Dispatch,
+  SetStateAction,
 } from "react"
 
 import {
@@ -33,12 +35,21 @@ type ExpensesContextValue = {
   deletingId: string
   total: number
   error: string | null
+  filters: ExpenseFilters
+  setFilters: Dispatch<SetStateAction<ExpenseFilters>>
   refresh: () => Promise<void>
   create: (input: CreateExpenseInput) => Promise<Expense>
   update: (expenseId: string, input: UpdateExpenseInput) => Promise<Expense>
   deleteExpense: (expenseId: string) => Promise<void>
 }
 const ExpensesContext = createContext<ExpensesContextValue | null>(null)
+
+const defaultFilters: ExpenseFilters = {
+  from: "",
+  to: "",
+  offset: 0,
+  limit: 50,
+}
 
 export function ExpensesProvider({ children }: { children: ReactNode }) {
   const { currentHousehold } = useHousehold()
@@ -50,6 +61,8 @@ export function ExpensesProvider({ children }: { children: ReactNode }) {
   const [deletingId, setDeletingId] = useState<string>("")
   const [total, setTotal] = useState<number>(0)
   const [error, setError] = useState<string | null>(null)
+
+  const [filters, setFilters] = useState<ExpenseFilters>(defaultFilters)
 
   const refresh = useCallback(async () => {
     if (!currentHousehold) {
@@ -63,7 +76,7 @@ export function ExpensesProvider({ children }: { children: ReactNode }) {
     setError(null)
 
     try {
-      const response = await getExpenses(currentHousehold.id, {})
+      const response = await getExpenses(currentHousehold.id, filters)
       setExpenses(response.expenses)
       setTotal(response.total)
     } catch (requestError) {
@@ -77,9 +90,9 @@ export function ExpensesProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false)
     }
-  }, [currentHousehold])
+  }, [currentHousehold, filters])
 
-  useEffect(() => void refresh(), [refresh])
+  useEffect(() => void refresh(), [refresh, filters])
 
   const create = useCallback(
     async (input: CreateExpenseInput) => {
@@ -170,6 +183,8 @@ export function ExpensesProvider({ children }: { children: ReactNode }) {
       deletingId,
       total,
       error,
+      filters,
+      setFilters,
       refresh,
       create,
       update,
@@ -182,6 +197,8 @@ export function ExpensesProvider({ children }: { children: ReactNode }) {
       isDeleting,
       total,
       error,
+      filters,
+      setFilters,
       refresh,
       create,
       update,

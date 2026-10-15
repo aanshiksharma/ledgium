@@ -3,7 +3,7 @@ import { ExpenseDebt, useExpenses } from "@/features/expenses"
 import { ExpenseListRow, ExpenseListRowSkeleton } from "./expense-list-row"
 import { Table, TableBody } from "@/components/ui/table"
 
-export function ExpenseList({ viewMode }: { viewMode: "grid" | "list" }) {
+export function ExpenseList() {
   const { expenses, isLoading: expensesLoading, isSubmitting } = useExpenses()
 
   if (expensesLoading) {

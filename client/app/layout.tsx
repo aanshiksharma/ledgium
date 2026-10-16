@@ -56,15 +56,15 @@ export default function RootLayout({
             <HouseholdProvider>
               <MembersProvider>
                 <CategoriesProvider>
-                  <ExpensesProvider>
-                    <DebtsProvider>
-                      <DashboardProvider>
+                  <DebtsProvider>
+                    <DashboardProvider>
+                      <ExpensesProvider>
                         <ThemeProvider>{children}</ThemeProvider>
 
                         <Toaster theme="dark" position="top-center" />
-                      </DashboardProvider>
-                    </DebtsProvider>
-                  </ExpensesProvider>
+                      </ExpensesProvider>
+                    </DashboardProvider>
+                  </DebtsProvider>
                 </CategoriesProvider>
               </MembersProvider>
             </HouseholdProvider>

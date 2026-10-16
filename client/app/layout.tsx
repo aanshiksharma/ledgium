@@ -10,6 +10,7 @@ import {
   ExpensesProvider,
   HouseholdProvider,
   MembersProvider,
+  DashboardProvider,
 } from "@/providers"
 import { cn } from "@/lib/utils"
 import { Toaster } from "sonner"
@@ -57,9 +58,11 @@ export default function RootLayout({
                 <CategoriesProvider>
                   <ExpensesProvider>
                     <DebtsProvider>
-                      <ThemeProvider>{children}</ThemeProvider>
+                      <DashboardProvider>
+                        <ThemeProvider>{children}</ThemeProvider>
 
-                      <Toaster theme="dark" position="top-center" />
+                        <Toaster theme="dark" position="top-center" />
+                      </DashboardProvider>
                     </DebtsProvider>
                   </ExpensesProvider>
                 </CategoriesProvider>

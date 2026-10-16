@@ -2,25 +2,20 @@
 
 import { useState } from "react"
 
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Item, ItemActions, ItemHeader, ItemTitle } from "@/components/ui/item"
+import { Button } from "@/components/ui/button"
 
-import { useHousehold } from "@/features/households"
-import { useDashboard } from "../hooks/use-dashboard"
-import type { DashboardFilters } from "../types/dashboard.types"
-
-import { DashboardSummary } from "./dashboard-summary"
-import { AccountBalances } from "./account-balances"
-import { CategoryBreakdown } from "./category-breakdown"
-import { RecentTransactions } from "./recent-transactions"
-import { HouseholdOverview } from "./household-overview"
 import {
+  LoadingHousehold,
   NoCurrentHousehold,
   ZeroHouseholds,
-} from "../../households/components/error-states"
-
-import { ProgressBar } from "@/components/common/progress-bar"
-import { Button } from "@/components/ui/button"
+  useHousehold,
+} from "@/features/households"
+import {
+  HouseholdOverview,
+  useDashboard,
+  type DashboardFilters,
+} from "@/features/dashboard"
 
 export function DashboardPage() {
   const {
@@ -40,19 +35,13 @@ export function DashboardPage() {
 
   const error = householdError ?? dashboardError
 
-  if (householdLoading)
-    return (
-      <div className="flex h-full items-center justify-center">
-        <ProgressBar
-          loading={householdLoading}
-          loadingText="Loading Households"
-        />
-      </div>
-    )
+  if (householdLoading) return <LoadingHousehold />
 
   if (households.length === 0) return <ZeroHouseholds />
 
   if (!currentHousehold) return <NoCurrentHousehold households={households} />
+
+  if (!dashboard) return <p>Loading dashboard details</p>
 
   return (
     <div className="flex flex-col gap-6">

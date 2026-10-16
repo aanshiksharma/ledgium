@@ -1,4 +1,8 @@
+"use client"
+
 import Link from "next/link"
+
+import { useEffect, useState } from "react"
 
 import { BadgeCheck } from "lucide-react"
 
@@ -20,12 +24,11 @@ import {
 } from "@/components/ui/empty"
 import { Item, ItemHeader, ItemTitle, ItemContent } from "@/components/ui/item"
 import { Table, TableBody, TableRow, TableCell } from "@/components/ui/table"
+import { Skeleton } from "@/components/ui/skeleton"
 
 import { useAuth } from "@/features/auth"
 import { useDebts } from "@/features/debts"
 import { Dashboard, useDashboard } from "@/features/dashboard"
-import { useEffect, useState } from "react"
-import { Skeleton } from "@/components/ui/skeleton"
 
 type Props = {
   currentHouseholdId: string

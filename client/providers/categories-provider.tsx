@@ -13,7 +13,6 @@ import {
 import {
   createCategory,
   deleteCategory,
-  getCategory,
   getCategories,
   updateCategory,
 } from "@/features/categories/api/category-api"

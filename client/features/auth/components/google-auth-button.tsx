@@ -2,8 +2,13 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+
+import { toast } from "sonner"
+
 import { Button } from "@/components/ui/button"
-import { useAuth } from "../hooks/use-auth"
+
+import { useAuth } from "@/features/auth"
+
 import { ApiError } from "@/lib/api/errors"
 
 declare global {
@@ -52,7 +57,8 @@ export function GoogleAuthButton() {
           setLoading(true)
 
           try {
-            await auth.loginWithGoogle({ credential })
+            const response = await auth.loginWithGoogle({ credential })
+            toast.success(`Signed in as ${response.user.name}`)
             router.replace("/")
           } catch (error) {
             setError(
@@ -67,9 +73,11 @@ export function GoogleAuthButton() {
       })
 
       window.google.accounts.id.renderButton(container, {
-        theme: "outline",
+        theme: "outline_dark",
         size: "large",
-        width: 400,
+        logo_alignment: "center",
+        shape: "pill",
+        width: 320,
         text: "continue_with",
       })
     }
@@ -81,25 +89,23 @@ export function GoogleAuthButton() {
     }
   }, [auth, router])
 
+  useEffect(() => {
+    if (!error) return
+    toast.error(error)
+  }, [error])
+
   if (!GOOGLE_CLIENT_ID) {
     return (
-      <Button type="button" variant="outline" className="w-full" disabled>
+      <Button variant="outline" className="w-full" disabled>
         Google authentication is not configured
       </Button>
     )
   }
 
   return (
-    <div className="space-y-2">
-      <div
-        id="google-sign-in"
-        className={loading ? "pointer-events-none opacity-50" : undefined}
-      />
-      {error && (
-        <p role="alert" className="text-center text-sm text-destructive">
-          {error}
-        </p>
-      )}
-    </div>
+    <div
+      id="google-sign-in"
+      className={loading ? "pointer-events-none opacity-50" : undefined}
+    />
   )
 }

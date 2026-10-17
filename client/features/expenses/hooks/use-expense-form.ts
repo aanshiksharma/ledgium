@@ -226,7 +226,6 @@ export function useExpenseForm({ expense, onSuccess }: ExpenseFormProps) {
       if (expense) await update(expense.id, input)
       else await create(input)
 
-      await refresh()
       onSuccess?.()
     } catch (error) {
       console.error(

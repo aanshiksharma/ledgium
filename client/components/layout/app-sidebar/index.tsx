@@ -18,10 +18,12 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "../../ui/sidebar"
-import { HouseholdSwitcher } from "./household-switcher"
+} from "@/components/ui/sidebar"
+import { useSidebar } from "@/components/ui/sidebar"
+
 import { SidebarUser } from "./sidebar-user"
 import { useAuth } from "@/features/auth"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 export type SIDEBARUSER = {
   name: string
@@ -31,12 +33,14 @@ export type SIDEBARUSER = {
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const isMobile = useIsMobile()
+  const { user, isLoading } = useAuth()
+  const { toggleSidebar } = useSidebar()
   const [sidebarUser, setSidebarUser] = useState<SIDEBARUSER>({
     name: "test",
     email: "test",
     avatar: null,
   })
-  const { user, isLoading } = useAuth()
 
   useEffect(() => {
     if (!user) return
@@ -53,7 +57,13 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader>
-        <HouseholdSwitcher />
+        <div className="flex items-center gap-2 p-2">
+          <figure className="flex size-9 items-center justify-center rounded-md bg-primary/80 font-heading font-bold">
+            L
+          </figure>
+
+          <span>Ledgium</span>
+        </div>
       </SidebarHeader>
 
       <SidebarContent>
@@ -74,7 +84,10 @@ export function AppSidebar() {
 
                     return (
                       <SidebarMenuItem key={item.href}>
-                        <SidebarMenuButton asChild>
+                        <SidebarMenuButton
+                          size={isMobile ? "lg" : "default"}
+                          asChild
+                        >
                           <Link
                             href={item.href}
                             className={cn(
@@ -83,6 +96,9 @@ export function AppSidebar() {
                               isActive && "bg-muted font-medium",
                               !item.enabled && "pointer-events-none opacity-30"
                             )}
+                            onClick={() =>
+                              isMobile ? toggleSidebar() : undefined
+                            }
                           >
                             <Icon className="size-4" />
                             <span>{item.label}</span>

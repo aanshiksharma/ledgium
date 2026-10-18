@@ -1,5 +1,9 @@
 import { useRouter } from "next/navigation"
 
+import { Ellipsis, LogOut } from "lucide-react"
+
+import { ApiError } from "@/lib/api/errors"
+
 import {
   SidebarMenu,
   SidebarMenuItem,
@@ -16,11 +20,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 
-import { ChevronsUpDown, LogOut } from "lucide-react"
-
 import { useAuth } from "@/features/auth"
 
 import type { SIDEBARUSER } from "./index.tsx"
+import { toast } from "sonner"
 
 export function SidebarUser({ user }: { user: SIDEBARUSER }) {
   const { logout } = useAuth()
@@ -28,8 +31,22 @@ export function SidebarUser({ user }: { user: SIDEBARUSER }) {
   const router = useRouter()
 
   async function handleLogout() {
-    await logout()
-    router.replace("/")
+    toast.promise<void>(
+      async () => {
+        await logout()
+      },
+      {
+        loading: "Logging out",
+        success: () => {
+          router.replace("/")
+          return "Logged out successfully"
+        },
+        error: (error) =>
+          error instanceof ApiError
+            ? error.message
+            : "Could not log you out. Please try again",
+      }
+    )
   }
 
   if (!user)
@@ -54,7 +71,7 @@ export function SidebarUser({ user }: { user: SIDEBARUSER }) {
                 <span className="truncate font-medium">{user.name}</span>
                 <span className="truncate text-xs">{user.email}</span>
               </div>
-              <ChevronsUpDown className="ml-auto size-4" />
+              <Ellipsis className="ml-auto size-4" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
 

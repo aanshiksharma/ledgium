@@ -1,11 +1,11 @@
 import {
-  CreditCard,
+  ArrowLeftRight,
+  FolderTree,
   HandCoins,
   LayoutDashboard,
-  ListChecks,
   ReceiptText,
   Settings,
-  Tags,
+  UserGroup,
   Users,
 } from "lucide-react"
 
@@ -50,19 +50,19 @@ export const navigationGroups: NavigationGroup[] = [
       {
         label: "Settlements",
         href: "/settlements",
-        icon: HandCoins,
+        icon: ArrowLeftRight,
         enabled: true,
       },
       {
         label: "Categories",
         href: "/categories",
-        icon: Tags,
+        icon: FolderTree,
         enabled: true,
       },
       {
         label: "Members",
         href: "/members",
-        icon: Users,
+        icon: UserGroup,
         enabled: true,
       },
     ],

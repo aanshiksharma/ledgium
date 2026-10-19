@@ -2,7 +2,6 @@ import Link from "next/link"
 
 import { convertToRelativeDate } from "@/lib/utils"
 
-import { Badge } from "@/components/ui/badge"
 import {
   Card,
   CardAction,
@@ -11,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 

@@ -25,7 +25,9 @@ import type {
   ExpenseFilters,
   UpdateExpenseInput,
 } from "@/features/expenses"
-import { useHousehold } from "./household-provider"
+import { useHousehold } from "@/features/households"
+import { useDebts } from "@/features/debts"
+import { useDashboard } from "@/features/dashboard"
 
 type ExpensesContextValue = {
   expenses: Expense[]
@@ -53,6 +55,8 @@ const defaultFilters: ExpenseFilters = {
 
 export function ExpensesProvider({ children }: { children: ReactNode }) {
   const { currentHousehold } = useHousehold()
+  const { refresh: refreshDebtsAndSettlements } = useDebts()
+  const { refresh: refreshDashboard } = useDashboard()
 
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
@@ -79,6 +83,8 @@ export function ExpensesProvider({ children }: { children: ReactNode }) {
       const response = await getExpenses(currentHousehold.id, filters)
       setExpenses(response.expenses)
       setTotal(response.total)
+
+      void Promise.all([refreshDebtsAndSettlements, refreshDashboard])
     } catch (requestError) {
       setExpenses([])
       setTotal(0)
@@ -103,6 +109,7 @@ export function ExpensesProvider({ children }: { children: ReactNode }) {
 
       try {
         const expense = await createExpense(currentHousehold.id, input)
+
         await refresh()
         return expense
       } catch (requestError) {
@@ -114,6 +121,7 @@ export function ExpensesProvider({ children }: { children: ReactNode }) {
         throw requestError
       } finally {
         setIsSubmitting(false)
+        await refreshDebtsAndSettlements()
       }
     },
     [currentHousehold, refresh]

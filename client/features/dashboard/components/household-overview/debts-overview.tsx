@@ -1,3 +1,6 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import Link from "next/link"
 
 import { BadgeCheck } from "lucide-react"
@@ -20,22 +23,16 @@ import {
 } from "@/components/ui/empty"
 import { Item, ItemHeader, ItemTitle, ItemContent } from "@/components/ui/item"
 import { Table, TableBody, TableRow, TableCell } from "@/components/ui/table"
+import { Skeleton } from "@/components/ui/skeleton"
 
 import { useAuth } from "@/features/auth"
 import { useDebts } from "@/features/debts"
 import { Dashboard, useDashboard } from "@/features/dashboard"
-import { useEffect, useState } from "react"
-import { Skeleton } from "@/components/ui/skeleton"
 
-type Props = {
-  currentHouseholdId: string
-}
-
-export function DebtsOverview({ currentHouseholdId }: Props) {
+export function DebtsOverview() {
   const { user } = useAuth()
   const { isLoading: balanceLoading, balances } = useDebts()
-  const { isLoading: dashboardLoading, dashboard } =
-    useDashboard(currentHouseholdId)
+  const { isLoading: dashboardLoading, dashboard } = useDashboard()
 
   const [householdDebts, setHouseholdDebts] = useState<
     Dashboard["householdDebts"] | undefined

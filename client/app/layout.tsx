@@ -50,7 +50,7 @@ export default function RootLayout({
         manropeHeading.variable
       )}
     >
-      <body>
+      <body className="overflow-x-hidden">
         <TooltipProvider>
           <AuthProvider>
             <HouseholdProvider>

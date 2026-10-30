@@ -1,9 +1,7 @@
-import { type LucideIcon } from "lucide-react"
-import * as Icons from "lucide-react"
-
 import { toast } from "sonner"
+import { Edit } from "lucide-react"
 
-import { convertToRelativeDate, money } from "@/lib/utils"
+import { convertToRelativeDate, extractInitials, money } from "@/lib/utils"
 
 import {
   Avatar,
@@ -11,20 +9,20 @@ import {
   AvatarGroup,
   AvatarImage,
 } from "@/components/ui/avatar"
-import { DynamicIcon } from "@/components/common/dynamic-icon"
 import { TableCell, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 
-import { DeleteExpenseButton } from "./delete-expense-button"
+import { DynamicIcon } from "@/components/common/dynamic-icon"
+
+import { DeleteExpenseButton } from "@/features/expenses"
 
 import {
   type Expense,
   ExpenseFormButton,
   useExpenses,
 } from "@/features/expenses"
-import { useMembers } from "@/features/members"
 
 type Props = {
   expense: Expense
@@ -32,7 +30,6 @@ type Props = {
 }
 
 export function ExpenseListRow({ expense, hideDelete = false }: Props) {
-  const { members } = useMembers()
   const { isDeleting, deletingId, deleteExpense } = useExpenses()
 
   const handleDelete = (expenseId: string): void => {
@@ -95,52 +92,50 @@ export function ExpenseListRow({ expense, hideDelete = false }: Props) {
       <TableCell>
         <div className="grid grid-cols-[5rem_1fr_1fr] gap-2">
           <AvatarGroup>
-            {expense.debts.map((debt) => {
-              const member = members.find(
-                (member) => member.userId === debt.debtorId
+            {expense.participants.map((member) => {
+              if (
+                expense.payers.find((payer) => payer.userId === member.userId)
               )
+                return
 
-              if (member)
-                return (
-                  <Avatar key={member.id} size="sm">
-                    <AvatarImage
-                      src={
-                        member.user.imageUrl ? member.user.imageUrl : undefined
-                      }
-                    />
-                    <AvatarFallback>
-                      {member.user.name
-                        .split(" ")
-                        .map((word) => word.charAt(0))}
-                    </AvatarFallback>
-                  </Avatar>
-                )
+              return (
+                <Avatar key={member.id} size="sm">
+                  <AvatarImage
+                    src={
+                      member.user.imageUrl ? member.user.imageUrl : undefined
+                    }
+                  />
+                  <AvatarFallback>
+                    {extractInitials(member.user.name)}
+                  </AvatarFallback>
+                </Avatar>
+              )
             })}
           </AvatarGroup>
 
-          <div className="flex items-center gap-2">
-            <Avatar size="sm">
-              <AvatarImage
-                src={
-                  expense.creator.imageUrl
-                    ? expense.creator.imageUrl
-                    : undefined
-                }
-              />
-              <AvatarFallback>
-                {expense.creator.name.split(" ").map((word) => word.charAt(0))}
-              </AvatarFallback>
-            </Avatar>
+          <AvatarGroup>
+            {expense.payers.map((payer) => (
+              <div key={payer.id} className="flex items-center gap-2">
+                <Avatar size="sm">
+                  <AvatarImage
+                    src={payer.user.imageUrl ? payer.user.imageUrl : undefined}
+                  />
+                  <AvatarFallback>
+                    {extractInitials(payer.user.name)}
+                  </AvatarFallback>
+                </Avatar>
 
-            <span>{expense.creator.name}</span>
-          </div>
+                <span>{payer.user.name}</span>
+              </div>
+            ))}
+          </AvatarGroup>
         </div>
       </TableCell>
 
       <TableCell>
         <ExpenseFormButton expense={expense}>
           <Button variant="ghost" size="icon">
-            <Icons.Edit />
+            <Edit />
           </Button>
         </ExpenseFormButton>
 

@@ -11,6 +11,7 @@ import {
   CardContent,
   CardDescription,
   CardAction,
+  CardFooter,
 } from "@/components/ui/card"
 import {
   Item,
@@ -20,10 +21,11 @@ import {
   ItemTitle,
   ItemDescription,
 } from "@/components/ui/item"
-import { SettleDebtButton, DebtBalance } from "@/features/debts"
-
-import { useAuth } from "@/features/auth"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
+
+import { SettleDebtButton, DebtBalance } from "@/features/debts"
+import { useAuth } from "@/features/auth"
 
 export function DebtCard({ balance }: { balance: DebtBalance }) {
   const { user } = useAuth()
@@ -37,13 +39,15 @@ export function DebtCard({ balance }: { balance: DebtBalance }) {
   const canSettle = balance.creditor.id === currentUserId
 
   return (
-    <Card key={`${balance.debtor.id}-${balance.creditor.id}`}>
+    <Card className="h-full">
       <CardHeader>
         <CardTitle>
-          {balance.debtor.id === user!.id
+          {balance.debtor.id === currentUserId
             ? "You owe "
             : `${balance.debtor.name} owes `}
-          {balance.creditor.id === user!.id ? "you" : balance.creditor.name}
+          {balance.creditor.id === currentUserId
+            ? "you"
+            : balance.creditor.name}
         </CardTitle>
 
         <CardDescription>
@@ -58,8 +62,8 @@ export function DebtCard({ balance }: { balance: DebtBalance }) {
         </CardAction>
       </CardHeader>
 
-      <CardContent className="h-full">
-        <div className="flex h-full flex-col justify-between gap-2">
+      <CardContent className="flex h-full flex-col gap-4">
+        <ScrollArea className="h-full max-h-[35svh]">
           <ItemGroup>
             {balance.debts.map((debt) => (
               <Item key={debt.id} size="sm" variant="muted">
@@ -78,10 +82,14 @@ export function DebtCard({ balance }: { balance: DebtBalance }) {
               </Item>
             ))}
           </ItemGroup>
-
-          {canSettle && <SettleDebtButton balance={balance} />}
-        </div>
+        </ScrollArea>
       </CardContent>
+
+      {canSettle && (
+        <CardFooter>
+          <SettleDebtButton balance={balance} />
+        </CardFooter>
+      )}
     </Card>
   )
 }

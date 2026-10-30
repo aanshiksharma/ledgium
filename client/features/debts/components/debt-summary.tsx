@@ -4,10 +4,13 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@/components/ui/empty"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import { DebtCard, DebtCardSkeleton, useDebts } from "@/features/debts"
+import { useAuth } from "@/features/auth"
 
 export function DebtSummary() {
+  const { user } = useAuth()
   const { balances, isLoading } = useDebts()
 
   if (isLoading)
@@ -33,13 +36,37 @@ export function DebtSummary() {
   }
 
   return (
-    <section className="grid gap-4 md:grid-cols-2 lg:gap-6 xl:grid-cols-3">
-      {balances.map((balance) => (
-        <DebtCard
-          key={`${balance.creditor.id}-${balance.debtor.id}`}
-          balance={balance}
-        />
-      ))}
-    </section>
+    <Tabs defaultValue="owe">
+      <TabsList>
+        <TabsTrigger value="owe">You owe</TabsTrigger>
+        <TabsTrigger value="owed">You are owed</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="owe">
+        <section className="grid gap-4 md:grid-cols-2 lg:gap-6 xl:grid-cols-3">
+          {balances
+            .filter((balance) => balance.debtor.id === user?.id)
+            .map((balance) => (
+              <DebtCard
+                key={`${balance.creditor.id}-${balance.debtor.id}`}
+                balance={balance}
+              />
+            ))}
+        </section>
+      </TabsContent>
+
+      <TabsContent value="owed">
+        <section className="grid gap-4 md:grid-cols-2 lg:gap-6 xl:grid-cols-3">
+          {balances
+            .filter((balance) => balance.creditor.id === user?.id)
+            .map((balance) => (
+              <DebtCard
+                key={`${balance.creditor.id}-${balance.debtor.id}`}
+                balance={balance}
+              />
+            ))}
+        </section>
+      </TabsContent>
+    </Tabs>
   )
 }

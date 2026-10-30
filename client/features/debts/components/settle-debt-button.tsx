@@ -43,7 +43,7 @@ export function SettleDebtButton({ balance }: { balance: DebtBalance }) {
       }}
     >
       <DialogTrigger asChild>
-        <Button>Settle</Button>
+        <Button className="w-full">Settle</Button>
       </DialogTrigger>
 
       <DialogContent>

@@ -1,0 +1,5 @@
+@layer components{
+    .reveal-text{
+        @apply origin-top;
+    }
+}

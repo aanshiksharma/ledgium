@@ -1,6 +1,7 @@
 export { ExpensesPage } from "./components/expenses-page"
 export { ExpenseForm } from "./components/expense-form"
 export { ExpenseFormButton } from "./components/expense-form-button"
+export { DeleteExpenseButton } from "./components/delete-expense-button"
 export { ExpenseList } from "./components/expense-list"
 export {
   ExpenseListRow,

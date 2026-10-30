@@ -1,7 +1,7 @@
 import { Metadata } from "next"
 import { Geist_Mono, Inter, Manrope } from "next/font/google"
 
-import "./globals.css"
+import "./styles/globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import {
   AuthProvider,
@@ -50,7 +50,7 @@ export default function RootLayout({
         manropeHeading.variable
       )}
     >
-      <body>
+      <body className="overflow-x-hidden">
         <TooltipProvider>
           <AuthProvider>
             <HouseholdProvider>

@@ -22,6 +22,13 @@ import { Skeleton } from "@/components/ui/skeleton"
 import type { ExpenseFormValues } from "@/features/expenses"
 import { useCategories } from "@/features/categories"
 import { useHousehold } from "@/features/households"
+import { Badge } from "@/components/ui/badge"
+import { getCurrency } from "@/lib/utils"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
 
 export function ExpenseDetailsFields({ disabled }: { disabled?: boolean }) {
   const { currentHousehold } = useHousehold()
@@ -93,20 +100,23 @@ export function ExpenseDetailsFields({ disabled }: { disabled?: boolean }) {
         control={control}
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor="expense-total">
-              Total amount ({currentHousehold!.currency})
-            </FieldLabel>
-            <Input
-              {...field}
-              id="expense-total"
-              type="number"
-              min="0"
-              step="0.01"
-              inputMode="decimal"
-              placeholder="0.00"
-              disabled={disabled}
-              aria-invalid={fieldState.invalid}
-            />
+            <FieldLabel htmlFor="expense-total">Total amount</FieldLabel>
+            <InputGroup>
+              <InputGroupAddon>
+                {getCurrency(currentHousehold!.currency)}
+              </InputGroupAddon>
+              <InputGroupInput
+                value={field.value}
+                onChange={(e) => {
+                  if (e.target.value === "" || Number(e.target.value))
+                    field.onChange(e.target.value)
+                }}
+                id="expense-total"
+                placeholder="0.00"
+                disabled={disabled}
+                aria-invalid={fieldState.invalid}
+              />
+            </InputGroup>
             <FieldError errors={[fieldState.error]} />
           </Field>
         )}

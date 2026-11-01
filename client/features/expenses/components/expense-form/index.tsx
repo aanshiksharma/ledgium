@@ -6,11 +6,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 
 import { ExpenseDateField } from "./expense-date-field"
 import { ExpenseDetailsFields } from "./expense-details-fields"
-import { ExpenseParticipantsField } from "./expense-participants-field"
 import { ExpensePayerField } from "./expense-payer-field"
 import { ExpenseSplitSection } from "./expense-split-section"
-import { useExpenseForm } from "@/features/expenses"
-import type { ExpenseFormProps } from "../../types/expense-form.types"
+import { useExpenseForm, type ExpenseFormProps } from "@/features/expenses"
 
 export function ExpenseForm(props: ExpenseFormProps) {
   const {
@@ -20,25 +18,13 @@ export function ExpenseForm(props: ExpenseFormProps) {
     differenceCents,
     distributionBalanced,
     financialFieldsLocked,
-    hasRecordedSettlements,
     submit,
   } = useExpenseForm(props)
 
   return (
     <FormProvider {...form}>
       <form onSubmit={submit} id="household-expense-form" className="space-y-6">
-        {financialFieldsLocked && hasRecordedSettlements && (
-          <Alert>
-            <AlertDescription>
-              This expense has recorded settlements. Its financial fields are
-              locked to preserve settlement history.
-            </AlertDescription>
-          </Alert>
-        )}
-
         <ExpenseDetailsFields disabled={financialFieldsLocked} />
-
-        <ExpenseParticipantsField disabled={financialFieldsLocked} />
 
         <ExpenseSplitSection
           participantIds={values.participantIds}

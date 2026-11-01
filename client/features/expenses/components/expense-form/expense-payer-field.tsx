@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react"
+import { ReactNode } from "react"
 import { Controller, useFormContext } from "react-hook-form"
 
 import {
@@ -9,10 +9,9 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Field, FieldError } from "@/components/ui/field"
-import { Button } from "@/components/ui/button"
+import { Field, FieldError, FieldLabel } from "@/components/ui/field"
 
-import type { ExpenseFormValues } from "../../types/expense-form.types"
+import type { ExpenseFormValues } from "@/features/expenses"
 
 import { type HouseholdMember, useMembers } from "@/features/members"
 
@@ -38,63 +37,41 @@ function memberAvatar(member: HouseholdMember): ReactNode {
 }
 
 export function ExpensePayerField({ disabled }: Props) {
-  const [showPayerSelector, setShowPayerSelector] = useState(false)
-  const { getValues, control } = useFormContext<ExpenseFormValues>()
-
+  const { control } = useFormContext<ExpenseFormValues>()
   const { members } = useMembers()
-
-  const payerId = getValues("payerId")
-  const payer = members.find((member) => member.userId === payerId)
 
   return (
     <section className="space-y-3">
-      <h2>Payer</h2>
+      <FieldLabel>Paid By</FieldLabel>
 
-      <div className="flex items-center gap-2">
-        {showPayerSelector ? (
-          <Controller
-            control={control}
-            name="payerId"
-            render={({ field, fieldState }) => (
-              <Field>
-                <Select
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  disabled={disabled}
-                >
-                  <SelectTrigger aria-invalid={fieldState.invalid}>
-                    <SelectValue placeholder="Choose" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {members.map((member) => (
-                      <SelectItem key={member.userId} value={member.userId}>
-                        {memberAvatar(member)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+      <Controller
+        control={control}
+        name="payerId"
+        render={({ field, fieldState }) => (
+          <Field>
+            <Select
+              value={field.value}
+              onValueChange={(value) => {
+                if (value) field.onChange(value)
+              }}
+              disabled={disabled}
+            >
+              <SelectTrigger aria-invalid={fieldState.invalid}>
+                <SelectValue placeholder="Choose" />
+              </SelectTrigger>
+              <SelectContent>
+                {members.map((member) => (
+                  <SelectItem key={member.userId} value={member.userId}>
+                    {memberAvatar(member)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-                <FieldError errors={[fieldState.error]} />
-              </Field>
-            )}
-          />
-        ) : (
-          <Select disabled>
-            <SelectTrigger className="flex-1">
-              {payer && memberAvatar(payer)}
-            </SelectTrigger>
-          </Select>
+            <FieldError errors={[fieldState.error]} />
+          </Field>
         )}
-
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setShowPayerSelector((prev) => !prev)}
-          disabled={disabled}
-        >
-          {showPayerSelector ? "Cancel" : "Change"}
-        </Button>
-      </div>
+      />
     </section>
   )
 }

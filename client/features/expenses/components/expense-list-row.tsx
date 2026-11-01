@@ -16,7 +16,11 @@ import { Badge } from "@/components/ui/badge"
 
 import { DynamicIcon } from "@/components/common/dynamic-icon"
 
-import { DeleteExpenseButton } from "@/features/expenses"
+import {
+  DeleteExpenseButton,
+  useExpenseForm,
+  type ExpenseDebt,
+} from "@/features/expenses"
 
 import {
   type Expense,
@@ -39,6 +43,12 @@ export function ExpenseListRow({ expense, hideDelete = false }: Props) {
       error: "Error",
     })
   }
+
+  const hasSettlements = expense
+    ? expense.debts.some(
+        (debt: ExpenseDebt) => (debt._count?.settlementAllocations ?? 0) > 0
+      )
+    : false
 
   return (
     <TableRow
@@ -134,12 +144,15 @@ export function ExpenseListRow({ expense, hideDelete = false }: Props) {
 
       <TableCell>
         <ExpenseFormButton expense={expense}>
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" disabled={hasSettlements}>
             <Edit />
           </Button>
         </ExpenseFormButton>
 
-        <DeleteExpenseButton className={hideDelete ? "hidden" : ""}>
+        <DeleteExpenseButton
+          className={hideDelete ? "hidden" : ""}
+          disabled={hasSettlements}
+        >
           <Button
             variant="destructive"
             onClick={() => handleDelete(expense.id)}

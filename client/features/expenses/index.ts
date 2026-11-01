@@ -11,5 +11,7 @@ export {
 export { useExpenses } from "./hooks/use-expenses"
 export { useExpenseForm } from "./hooks/use-expense-form"
 
+export * from "./utils/expense-split.utils"
+
 export * from "./types/expense.types"
 export * from "./types/expense-form.types"

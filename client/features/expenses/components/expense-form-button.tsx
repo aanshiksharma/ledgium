@@ -27,7 +27,6 @@ import { Button } from "@/components/ui/button"
 import { useIsMobile } from "@/hooks/use-mobile"
 
 import { useExpenses, ExpenseForm, type Expense } from "@/features/expenses"
-import { useHousehold, type Household } from "@/features/households"
 
 type Props = {
   children: ReactNode
@@ -38,8 +37,9 @@ export function ExpenseFormButton({ children, expense }: Props) {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const isMobile = useIsMobile()
 
-  const { currentHousehold } = useHousehold()
   const { isSubmitting, isLoading } = useExpenses()
+
+  const title = `${expense ? "Edit" : "Add"} Expense`
 
   if (isMobile)
     return (
@@ -48,7 +48,7 @@ export function ExpenseFormButton({ children, expense }: Props) {
 
         <DrawerContent>
           <DrawerHeader>
-            <DrawerTitle>{expense ? "Edit" : "Add"} Expense</DrawerTitle>
+            <DrawerTitle>{title}</DrawerTitle>
           </DrawerHeader>
 
           <div className="no-scrollbar max-h-[70vh] overflow-y-auto p-4">
@@ -91,7 +91,7 @@ export function ExpenseFormButton({ children, expense }: Props) {
 
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{expense ? "Edit" : "Add"} Expense</DialogTitle>
+            <DialogTitle>{title}</DialogTitle>
           </DialogHeader>
 
           <div className="no-scrollbar max-h-[70vh] overflow-y-auto p-1">

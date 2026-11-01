@@ -33,11 +33,6 @@ export function ExpenseList() {
       <Table>
         <TableBody>
           {expenses.map((expense) => {
-            const hasSettlements = expense.debts.some(
-              (debt: ExpenseDebt) =>
-                (debt._count?.settlementAllocations ?? 0) > 0
-            )
-
             return <ExpenseListRow key={expense.id} expense={expense} />
           })}
         </TableBody>

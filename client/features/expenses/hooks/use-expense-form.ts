@@ -51,7 +51,7 @@ function createEditFormValues(expense: Expense): ExpenseFormValues {
     customAmounts: Object.fromEntries(
       expense.participants.map((participant) => [
         participant.userId,
-        String(participant.shareAmount),
+        participant.shareAmount,
       ])
     ),
     payerId: expense.payers[0]?.userId ?? "",
@@ -59,6 +59,7 @@ function createEditFormValues(expense: Expense): ExpenseFormValues {
 }
 
 export function useExpenseForm({ expense, onSuccess }: ExpenseFormProps) {
+  const countRef = useRef<number>(0)
   const { user } = useAuth()
   const { members } = useMembers()
   const initializedExpenseIdRef = useRef<string | null>(null)
@@ -117,29 +118,37 @@ export function useExpenseForm({ expense, onSuccess }: ExpenseFormProps) {
 
     if (initializedExpenseIdRef.current === expenseId) return
 
-    initializedExpenseIdRef.current = expenseId
+    const values = expense
+      ? createEditFormValues(expense)
+      : createDefaultFormValues(user?.id ?? "", members)
 
-    reset(
-      expense
-        ? createEditFormValues(expense)
-        : createDefaultFormValues(user?.id ?? "", members)
-    )
+    console.log("[Expense Form] Reset triggered", {
+      expenseId,
+      payerIdBeforeReset: form.getValues("payerId"),
+      payerIdAfterReset: values.payerId,
+      expensePayers: expense?.payers,
+    })
+
+    initializedExpenseIdRef.current = expenseId
+    reset(values)
   }, [expense, members, reset])
 
   // Controls changes in obligated amounts based on changes in the related fields
   useEffect(() => {
     if (
       financialFieldsLocked ||
-      splitMode !== "equal" ||
-      participantIds.length === 0
+      participantIds.length === 0 ||
+      Number(totalAmount) <= 0
     )
       return
 
-    setValue(
-      "customAmounts",
-      distributeEqually(toCents(totalAmount), participantIds)
-    )
-  }, [financialFieldsLocked, setValue, participantIds, splitMode, totalAmount])
+    if (splitMode === "equal") {
+      setValue(
+        "customAmounts",
+        distributeEqually(toCents(totalAmount), participantIds)
+      )
+    }
+  }, [setValue, participantIds, splitMode, totalAmount])
 
   const totalCents = toCents(totalAmount)
   const obligedCents = sumCents(customAmounts, participantIds)

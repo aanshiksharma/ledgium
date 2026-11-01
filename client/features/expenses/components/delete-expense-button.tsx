@@ -19,9 +19,11 @@ import { Button } from "@/components/ui/button"
 export function DeleteExpenseButton({
   children,
   className,
+  disabled,
 }: {
   children: ReactNode
   className?: string
+  disabled: boolean
 }) {
   return (
     <AlertDialog>
@@ -29,6 +31,7 @@ export function DeleteExpenseButton({
         <Button
           variant="ghost"
           size="icon"
+          disabled={disabled}
           className={`ml-1 text-destructive hover:text-destructive ${className}`}
         >
           <Trash />

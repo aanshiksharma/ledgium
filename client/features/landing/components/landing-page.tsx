@@ -9,10 +9,9 @@ export function LandingPage() {
   return (
     <>
       <LandingHero />
-      {/* <ProblemSection /> */}
+      <ProblemSection />
       <FeaturesSection />
       <HowItWorksSection />
-      <AboutSection />
       <ClosingCta />
     </>
   )

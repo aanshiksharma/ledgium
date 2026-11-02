@@ -8,8 +8,6 @@ import { ArrowUpRight, Menu, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 
-import { TemporaryLogo } from "@/components/common/temporary-logo"
-
 import { useLocomotiveScroll } from "@/providers/locomotive-scroll-provider"
 
 import { landingNavigation } from "../content/landing-content"
@@ -61,7 +59,7 @@ export function LandingHeader() {
           aria-label="Ledgium home"
           className="group flex items-center gap-3"
         >
-          <TemporaryLogo />
+          <img src="/logo/logo.png" alt="Ledgium" className="max-w-36" />
         </Link>
 
         <nav

@@ -122,13 +122,6 @@ export function useExpenseForm({ expense, onSuccess }: ExpenseFormProps) {
       ? createEditFormValues(expense)
       : createDefaultFormValues(user?.id ?? "", members)
 
-    console.log("[Expense Form] Reset triggered", {
-      expenseId,
-      payerIdBeforeReset: form.getValues("payerId"),
-      payerIdAfterReset: values.payerId,
-      expensePayers: expense?.payers,
-    })
-
     initializedExpenseIdRef.current = expenseId
     reset(values)
   }, [expense, members, reset])

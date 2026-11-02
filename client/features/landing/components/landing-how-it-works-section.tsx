@@ -4,18 +4,24 @@ export function HowItWorksSection() {
   return (
     <section
       id="how-it-works"
-      className="flex w-full scroll-mt-24 flex-col items-center gap-30 py-30"
+      className="relative flex w-full flex-col items-center gap-40 py-40"
     >
       <h2 className="text-center font-heading text-3xl leading-tight font-medium tracking-tight lg:text-5xl">
         A simple setup and
         <div className="text-primary">Ledgium tracks everything</div>
       </h2>
 
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="sticky top-0 flex h-svh items-center justify-center text-center font-heading text-9xl text-[clamp(3.5rem,21vw,11.5rem)] leading-tight font-bold tracking-tight uppercase opacity-3">
+          how it works?
+        </div>
+      </div>
+
       <div className="grid w-full max-w-6xl gap-30">
         {workflowSteps.map((step, index) => (
           <article
             key={step.number}
-            className={`flex w-full flex-col-reverse items-end gap-6 md:gap-12 ${index % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"}`}
+            className={`flex w-full flex-col-reverse gap-6 md:items-end md:gap-12 ${index % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"}`}
           >
             <div className="flex flex-2 flex-col gap-4">
               <h3 className="font-heading text-2xl md:text-3xl">

@@ -33,8 +33,13 @@ type Props = {
   expense?: Expense
 }
 
+const DRAWER_SNAP_POINTS = [0.6, 1]
+
 export function ExpenseFormButton({ children, expense }: Props) {
   const [isFormOpen, setIsFormOpen] = useState(false)
+  const [activeSnapPoint, setActiveSnapPoint] = useState<
+    string | number | null
+  >(0.6)
   const isMobile = useIsMobile()
 
   const { isSubmitting, isLoading } = useExpenses()
@@ -43,15 +48,22 @@ export function ExpenseFormButton({ children, expense }: Props) {
 
   if (isMobile)
     return (
-      <Drawer open={isFormOpen} onOpenChange={setIsFormOpen}>
+      <Drawer
+        open={isFormOpen}
+        onOpenChange={setIsFormOpen}
+        snapPoints={DRAWER_SNAP_POINTS}
+        activeSnapPoint={activeSnapPoint}
+        setActiveSnapPoint={(snapPoint) => setActiveSnapPoint(snapPoint)}
+        snapToSequentialPoint
+      >
         <DrawerTrigger asChild>{children}</DrawerTrigger>
 
-        <DrawerContent>
-          <DrawerHeader>
+        <DrawerContent className="max-h-dvh">
+          <DrawerHeader className="shrink-0">
             <DrawerTitle>{title}</DrawerTitle>
           </DrawerHeader>
 
-          <div className="no-scrollbar max-h-[70vh] overflow-y-auto p-4">
+          <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto p-4">
             <ExpenseForm
               key={expense?.id ?? "new"}
               expense={expense}
@@ -59,7 +71,7 @@ export function ExpenseFormButton({ children, expense }: Props) {
             />
           </div>
 
-          <DrawerFooter>
+          <DrawerFooter className="shrink-0">
             <Button
               type="submit"
               form="household-expense-form"

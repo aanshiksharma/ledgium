@@ -5,6 +5,8 @@ import {
   FieldGroup,
   FieldError,
   FieldLabel,
+  FieldContent,
+  FieldTitle,
 } from "@/components/ui/field"
 import {
   Item,
@@ -32,6 +34,8 @@ import { HouseholdMember, useMembers } from "@/features/members"
 import { useHousehold } from "@/features/households"
 
 import { extractInitials, getCurrency } from "@/lib/utils"
+import { useIsMobile } from "@/hooks/use-mobile"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 
 type Props = {
   participantIds: string[]
@@ -55,10 +59,9 @@ export function ExpenseSplitSection({
   disabled,
 }: Props) {
   const { control, formState } = useFormContext<ExpenseFormValues>()
-  const error = formState.errors.participantIds
-
   const { members } = useMembers()
   const { currentHousehold } = useHousehold()
+  const isMobile = useIsMobile()
 
   const { field: amountsField } = useController({
     name: "customAmounts",
@@ -73,30 +76,50 @@ export function ExpenseSplitSection({
         name="splitMode"
         control={control}
         render={({ field, fieldState }) => (
-          <Field>
-            <ToggleGroup
-              type="single"
-              variant="outline"
-              value={field.value}
-              onValueChange={(value) => field.onChange(value as SplitMode)}
-              disabled={disabled}
-              aria-invalid={fieldState.invalid}
-              className="grid grid-cols-2"
+          <RadioGroup
+            defaultValue="equal"
+            value={field.value}
+            onValueChange={(value) => field.onChange(value as SplitMode)}
+            disabled={disabled}
+            aria-invalid={fieldState.invalid}
+            className="relative grid grid-cols-2 gap-0 rounded-3xl bg-accent"
+          >
+            <FieldLabel
+              htmlFor="equal-split"
+              className="relative z-10 h-fit rounded-3xl! border-0! has-data-checked:bg-transparent!"
             >
-              <ToggleGroupItem
-                value="equal"
-                className="flex items-center justify-center py-8"
-              >
-                Equal Split
-              </ToggleGroupItem>
-              <ToggleGroupItem
-                value="custom"
-                className="flex items-center justify-center py-8"
-              >
-                Custom Split
-              </ToggleGroupItem>
-            </ToggleGroup>
-          </Field>
+              <Field className="py-2!">
+                <FieldContent className="items-center">
+                  <FieldTitle>Equal Split</FieldTitle>
+                </FieldContent>
+                <RadioGroupItem
+                  value="equal"
+                  id="equal-split"
+                  className="hidden"
+                />
+              </Field>
+            </FieldLabel>
+
+            <FieldLabel
+              htmlFor="custom-split"
+              className="relative z-10 h-fit rounded-3xl! border-0! has-data-checked:bg-transparent!"
+            >
+              <Field className="py-2!">
+                <FieldContent className="items-center">
+                  <FieldTitle>Custom Split</FieldTitle>
+                </FieldContent>
+                <RadioGroupItem
+                  value="custom"
+                  id="custom-split"
+                  className="hidden"
+                />
+              </Field>
+            </FieldLabel>
+
+            <div
+              className={`absolute inset-y-0 left-0 z-5 w-1/2 rounded-3xl bg-primary transition-transform duration-300 ease-out ${field.value === "equal" ? "translate-x-0" : "translate-x-full"}`}
+            />
+          </RadioGroup>
         )}
       />
 
@@ -110,7 +133,7 @@ export function ExpenseSplitSection({
 
               return (
                 <FieldLabel key={member.id} className="rounded-3xl!">
-                  <Field orientation="horizontal" className="justify-between">
+                  <Field className="justify-between gap-4 sm:flex-row">
                     <div className="flex items-center gap-3">
                       <Checkbox
                         checked={checked}
@@ -148,7 +171,7 @@ export function ExpenseSplitSection({
                       render={({ field, fieldState }) => (
                         <Field
                           aria-invalid={fieldState.invalid}
-                          className="w-fit"
+                          className="w-full min-w-32 sm:w-fit"
                         >
                           <InputGroup>
                             <InputGroupAddon>
@@ -172,7 +195,7 @@ export function ExpenseSplitSection({
                                   })
                                 }
                               }}
-                              className="w-full max-w-32 text-right"
+                              className="w-full font-mono sm:max-w-32"
                               disabled={
                                 disabled || splitMode === "equal" || !checked
                               }

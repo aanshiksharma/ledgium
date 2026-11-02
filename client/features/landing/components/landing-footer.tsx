@@ -2,7 +2,6 @@ import Link from "next/link"
 import { ArrowUpRight } from "lucide-react"
 
 import { landingNavigation } from "../content/landing-content"
-import { TemporaryLogo } from "@/components/common/temporary-logo"
 
 export function LandingFooter() {
   return (
@@ -11,7 +10,11 @@ export function LandingFooter() {
         <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr]">
           <div className="max-w-md">
             <Link href="/" aria-label="Ledgium home">
-              <TemporaryLogo />
+              <img
+                src="/logo/logo.png"
+                alt="Ledgium Logo"
+                className="max-w-36"
+              />
             </Link>
             <h2 className="my-4 text-sm font-medium text-foreground">
               Shared finances, kept clear.
@@ -76,7 +79,7 @@ export function LandingFooter() {
         </section>
 
         <section className="flex items-center justify-center">
-          <h2 className="text-[clamp(3.5rem,21vw,19rem)] leading-tight font-bold tracking-tight opacity-15">
+          <h2 className="text-[clamp(3.5rem,21vw,19rem)] leading-none font-bold tracking-tight opacity-15">
             LEDGIUM
           </h2>
         </section>

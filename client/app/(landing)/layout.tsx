@@ -14,15 +14,17 @@ export default function LandingPageLayout({
 }) {
   return (
     <LocomotiveScrollProvider>
-      <LandingHeader />
+      <div className="dark bg-background text-foreground">
+        <LandingHeader />
 
-      <main className="mx-auto flex min-h-screen max-w-360 flex-col items-center justify-center p-6 max-[90rem]:overflow-x-clip">
-        <LandingAuthRedirector />
+        <main className="mx-auto flex min-h-screen max-w-360 flex-col items-center justify-center p-6 max-[90rem]:overflow-x-clip">
+          <LandingAuthRedirector />
 
-        {children}
-      </main>
+          {children}
+        </main>
 
-      <LandingFooter />
+        <LandingFooter />
+      </div>
     </LocomotiveScrollProvider>
   )
 }

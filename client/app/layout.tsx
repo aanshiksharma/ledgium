@@ -31,6 +31,23 @@ const fontMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Ledgium",
   description: "Household finance management",
+
+  icons: {
+    icon: [
+      {
+        url: "/icons/favicon.ico",
+        sizes: "any",
+      },
+    ],
+
+    apple: [
+      {
+        url: "/icons/apple-touch-icon.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
+    ],
+  },
 }
 
 export default function RootLayout({

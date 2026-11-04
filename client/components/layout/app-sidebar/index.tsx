@@ -57,13 +57,7 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader>
-        <div className="flex items-center gap-2 p-2">
-          <figure className="flex size-9 items-center justify-center rounded-md bg-primary/80 font-heading font-bold">
-            L
-          </figure>
-
-          <span>Ledgium</span>
-        </div>
+        <img src="/logo/logo.png" alt="Ledgium" className="max-w-36" />
       </SidebarHeader>
 
       <SidebarContent>

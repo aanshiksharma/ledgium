@@ -3,6 +3,7 @@ import { ArrowRight, Download } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { LandingVideo } from "./landing-video"
+import { InstallButton } from "@/components/pwa/install-button"
 
 export function LandingHero() {
   return (
@@ -34,17 +35,8 @@ export function LandingHero() {
               <ArrowRight />
             </Link>
           </Button>
-          <Button
-            asChild
-            variant="outline"
-            size="lg"
-            className="gap-2 rounded-full border-border/80 bg-background/70 px-6 text-sm"
-          >
-            <Link href="/download">
-              <span>Download</span>
-              <Download />
-            </Link>
-          </Button>
+
+          <InstallButton />
         </div>
       </div>
 
